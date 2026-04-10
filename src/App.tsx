@@ -4,8 +4,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Landing from "./pages/Landing.tsx";
+import Auth from "./pages/Auth.tsx";
+import Dashboard from "./pages/Dashboard.tsx";
 import CreateTeam from "./pages/CreateTeam.tsx";
-import Login from "./pages/Login.tsx";
 import BookPage from "./pages/BookPage.tsx";
 import Admin from "./pages/Admin.tsx";
 import AdminMembers from "./pages/AdminMembers.tsx";
@@ -24,8 +25,9 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Landing />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/create" element={<CreateTeam />} />
-          <Route path="/login/:slug" element={<Login />} />
           <Route path="/book/:slug" element={<BookPage />} />
           <Route path="/admin/:slug" element={<Admin />} />
           <Route path="/admin/:slug/members" element={<AdminMembers />} />
