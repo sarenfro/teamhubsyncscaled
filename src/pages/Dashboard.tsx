@@ -62,7 +62,24 @@ const Dashboard = () => {
     loadData();
   }, [user, navigate]);
 
-  const handleClaim = async () => {
+  const reloadTeams = async () => {
+    const { data } = await supabase
+      .from("team_admins")
+      .select("team_id, role, team:team_id(id, name, slug)")
+      .eq("user_id", user!.id);
+    if (data) setTeams(data as unknown as TeamWithRole[]);
+  };
+
+  const handleDeleteTeam = async (teamId: string) => {
+    const { error } = await supabase.from("teams").delete().eq("id", teamId);
+    if (error) {
+      toast({ title: "Error", description: "Failed to delete team", variant: "destructive" });
+    } else {
+      toast({ title: "Team deleted" });
+      await reloadTeams();
+    }
+  };
+
     if (!claimSlug.trim() || !claimPassword.trim()) return;
     setClaiming(true);
     try {
