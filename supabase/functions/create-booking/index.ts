@@ -14,6 +14,7 @@ function generateICS(params: {
   bookerName: string;
   bookerEmail: string;
   organizerName: string;
+  uid: string;
 }): string {
   const { title, dateStr, timeStr, durationMinutes, bookerName, bookerEmail, organizerName } =
     params;
