@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      availability_overrides: {
+        Row: {
+          created_at: string
+          end_time: string | null
+          id: string
+          is_available: boolean
+          override_date: string
+          start_time: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_time?: string | null
+          id?: string
+          is_available?: boolean
+          override_date: string
+          start_time?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          end_time?: string | null
+          id?: string
+          is_available?: boolean
+          override_date?: string
+          start_time?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      availability_schedules: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          end_time: string
+          id: string
+          is_available: boolean
+          start_time: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          end_time?: string
+          id?: string
+          is_available?: boolean
+          start_time?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          is_available?: boolean
+          start_time?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           booker_email: string
@@ -92,6 +152,7 @@ export type Database = {
       }
       event_types: {
         Row: {
+          buffer_minutes: number
           color: string
           created_at: string
           description: string | null
@@ -100,6 +161,8 @@ export type Database = {
           is_active: boolean
           location_type: string | null
           location_value: string | null
+          max_days_advance: number
+          min_notice_minutes: number
           owner_team_id: string | null
           owner_user_id: string | null
           slug: string
@@ -107,6 +170,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          buffer_minutes?: number
           color?: string
           created_at?: string
           description?: string | null
@@ -115,6 +179,8 @@ export type Database = {
           is_active?: boolean
           location_type?: string | null
           location_value?: string | null
+          max_days_advance?: number
+          min_notice_minutes?: number
           owner_team_id?: string | null
           owner_user_id?: string | null
           slug: string
@@ -122,6 +188,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          buffer_minutes?: number
           color?: string
           created_at?: string
           description?: string | null
@@ -130,6 +197,8 @@ export type Database = {
           is_active?: boolean
           location_type?: string | null
           location_value?: string | null
+          max_days_advance?: number
+          min_notice_minutes?: number
           owner_team_id?: string | null
           owner_user_id?: string | null
           slug?: string

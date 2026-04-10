@@ -8,6 +8,7 @@ import Auth from "./pages/Auth.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import Onboarding from "./pages/Onboarding.tsx";
 import EventTypes from "./pages/EventTypes.tsx";
+import Availability from "./pages/Availability.tsx";
 import CreateTeam from "./pages/CreateTeam.tsx";
 import BookPage from "./pages/BookPage.tsx";
 import PersonalBooking from "./pages/PersonalBooking.tsx";
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/event-types" element={<EventTypes />} />
+          <Route path="/availability" element={<Availability />} />
           <Route path="/create" element={<CreateTeam />} />
           <Route path="/book/:slug" element={<BookPage />} />
           <Route path="/u/:userSlug" element={<PersonalBooking />} />

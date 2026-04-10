@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Users, LogOut, Key, Calendar } from "lucide-react";
+import { Plus, Users, LogOut, Key, Calendar, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface TeamWithRole {
@@ -113,6 +113,21 @@ const Dashboard = () => {
           </div>
           <p className="text-sm text-muted-foreground">
             Create and manage your personal meeting types.
+          </p>
+        </div>
+
+        {/* Availability */}
+        <div className="rounded-xl border border-border p-6 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-foreground flex items-center gap-2">
+              <Clock className="h-4 w-4" /> Availability
+            </h2>
+            <Button asChild variant="outline" size="sm">
+              <Link to="/availability">Set Hours</Link>
+            </Button>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Configure your weekly working hours for bookings.
           </p>
         </div>
 
