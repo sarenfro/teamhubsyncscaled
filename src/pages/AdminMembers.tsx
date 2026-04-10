@@ -179,13 +179,48 @@ const AdminMembers = () => {
                 type="email"
                 className="text-sm"
               />
+              <div className="flex items-center gap-1 mb-1">
+                <span className="text-sm font-medium text-muted-foreground">iCal URL</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="text-muted-foreground hover:text-foreground transition-colors">
+                      <HelpCircle className="h-4 w-4" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 text-sm space-y-3" side="top">
+                    <p className="font-semibold">How to find your iCal URL</p>
+                    <div className="space-y-2">
+                      <div>
+                        <p className="font-medium text-foreground">Google Calendar</p>
+                        <ol className="list-decimal list-inside text-muted-foreground space-y-0.5 text-xs">
+                          <li>Open Google Calendar on the web</li>
+                          <li>Click the ⋮ menu next to the calendar name</li>
+                          <li>Select <strong>Settings and sharing</strong></li>
+                          <li>Scroll to <strong>Integrate calendar</strong></li>
+                          <li>Copy the <strong>Secret address in iCal format</strong></li>
+                        </ol>
+                      </div>
+                      <div>
+                        <p className="font-medium text-foreground">Outlook / Microsoft 365</p>
+                        <ol className="list-decimal list-inside text-muted-foreground space-y-0.5 text-xs">
+                          <li>Open Outlook Calendar on the web</li>
+                          <li>Click the ⚙️ gear icon → <strong>View all Outlook settings</strong></li>
+                          <li>Go to <strong>Calendar → Shared calendars</strong></li>
+                          <li>Under <strong>Publish a calendar</strong>, select your calendar</li>
+                          <li>Click <strong>Publish</strong> and copy the <strong>ICS</strong> link</li>
+                        </ol>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
               <div className="flex gap-2">
                 <Input
                   value={icalInputs[member.id] ?? ""}
                   onChange={(e) =>
                     setIcalInputs((prev) => ({ ...prev, [member.id]: e.target.value }))
                   }
-                  placeholder="iCal URL (Google/Outlook calendar URL)"
+                  placeholder="Paste iCal URL here"
                   className="text-sm"
                 />
                 <Button
