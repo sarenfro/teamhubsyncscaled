@@ -8,6 +8,7 @@ import Auth from "./pages/Auth.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import Onboarding from "./pages/Onboarding.tsx";
 import EventTypes from "./pages/EventTypes.tsx";
+import Availability from "./pages/Availability.tsx";
 import CreateTeam from "./pages/CreateTeam.tsx";
 import BookPage from "./pages/BookPage.tsx";
 import PersonalBooking from "./pages/PersonalBooking.tsx";
