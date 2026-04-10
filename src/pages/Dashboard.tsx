@@ -357,6 +357,32 @@ const Dashboard = () => {
             )}
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Leave team confirmation */}
+        <AlertDialog
+          open={pendingLeaveTeam !== null}
+          onOpenChange={(open) => { if (!open) setPendingLeaveTeam(null); }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Leave "{pendingLeaveTeam?.name}"?</AlertDialogTitle>
+              <AlertDialogDescription>
+                You will no longer have access to manage this team. You can rejoin later if the team owner adds you back.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (pendingLeaveTeam) handleLeaveTeam(pendingLeaveTeam.id);
+                  setPendingLeaveTeam(null);
+                }}
+              >
+                Leave Team
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
