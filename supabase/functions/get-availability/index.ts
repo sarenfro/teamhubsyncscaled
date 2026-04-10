@@ -472,31 +472,112 @@ serve(async (req) => {
       }
     }
 
-    // Collect busy periods from all members' iCal feeds
+    // Collect busy periods from all members' iCal feeds AND Google Calendar
     const busyPeriods: { start: Date; end: Date }[] = [];
+
+    // Also fetch Google Calendar tokens for these members
+    const { data: gcalTokens } = await supabase
+      .from("google_calendar_tokens")
+      .select("team_member_id, access_token, refresh_token, token_expires_at, calendar_id")
+      .in("team_member_id", memberIds);
+
+    const gcalTokenMap = new Map<string, typeof gcalTokens extends (infer T)[] | null ? T : never>();
+    if (gcalTokens) {
+      for (const t of gcalTokens) {
+        if (t.team_member_id) gcalTokenMap.set(t.team_member_id, t);
+      }
+    }
 
     await Promise.all(
       members.map(async (member) => {
+        // Check iCal feed
         const icalUrl = member.ical_url;
-        if (!icalUrl) return;
-        try {
-          const response = await fetch(icalUrl, {
-            headers: { "User-Agent": "TeamBooking/1.0" },
-            signal: AbortSignal.timeout(8000),
-          });
-          if (!response.ok) {
-            console.error(`iCal fetch returned ${response.status} for member ${member.name}`);
-            return;
+        if (icalUrl) {
+          try {
+            const response = await fetch(icalUrl, {
+              headers: { "User-Agent": "TeamBooking/1.0" },
+              signal: AbortSignal.timeout(8000),
+            });
+            if (!response.ok) {
+              console.error(`iCal fetch returned ${response.status} for member ${member.name}`);
+            } else {
+              const icalText = await response.text();
+              const events = parseIcalForDate(icalText, dateStr);
+              if (events.length === 0) {
+                const eventCount = (icalText.match(/BEGIN:VEVENT/g) || []).length;
+                console.warn(`No busy events for ${member.name} on ${dateStr} (feed has ${eventCount} events total)`);
+              }
+              busyPeriods.push(...events.map((e) => ({ start: e.start, end: e.end })));
+            }
+          } catch (e) {
+            console.error(`iCal fetch failed for member ${member.name}:`, e);
           }
-          const icalText = await response.text();
-          const events = parseIcalForDate(icalText, dateStr);
-          if (events.length === 0) {
-            const eventCount = (icalText.match(/BEGIN:VEVENT/g) || []).length;
-            console.warn(`No busy events for ${member.name} on ${dateStr} (feed has ${eventCount} events total)`);
+        }
+
+        // Check Google Calendar
+        const gcalToken = gcalTokenMap.get(member.id);
+        if (gcalToken) {
+          try {
+            let accessToken = gcalToken.access_token;
+
+            // Refresh if expired
+            if (new Date(gcalToken.token_expires_at) <= new Date()) {
+              const refreshRes = await fetch("https://oauth2.googleapis.com/token", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({
+                  client_id: Deno.env.get("GOOGLE_CLIENT_ID")!,
+                  client_secret: Deno.env.get("GOOGLE_CLIENT_SECRET")!,
+                  refresh_token: gcalToken.refresh_token,
+                  grant_type: "refresh_token",
+                }),
+              });
+              if (refreshRes.ok) {
+                const refreshed = await refreshRes.json();
+                accessToken = refreshed.access_token;
+                const newExpires = new Date(Date.now() + refreshed.expires_in * 1000).toISOString();
+                await supabase
+                  .from("google_calendar_tokens")
+                  .update({ access_token: accessToken, token_expires_at: newExpires })
+                  .eq("team_member_id", member.id);
+              } else {
+                console.error(`Google token refresh failed for ${member.name}`);
+                return;
+              }
+            }
+
+            // Query Google Calendar FreeBusy API
+            const freeBusyRes = await fetch("https://www.googleapis.com/calendar/v3/freeBusy", {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                timeMin: new Date(`${dateStr}T00:00:00`).toISOString(),
+                timeMax: new Date(`${dateStr}T23:59:59`).toISOString(),
+                timeZone: TIMEZONE,
+                items: [{ id: gcalToken.calendar_id || "primary" }],
+              }),
+            });
+
+            if (freeBusyRes.ok) {
+              const freeBusyData = await freeBusyRes.json();
+              const calendarId = gcalToken.calendar_id || "primary";
+              const busySlots = freeBusyData.calendars?.[calendarId]?.busy || [];
+              for (const slot of busySlots) {
+                busyPeriods.push({
+                  start: new Date(slot.start),
+                  end: new Date(slot.end),
+                });
+              }
+              console.log(`Google Calendar: ${busySlots.length} busy slots for ${member.name}`);
+            } else {
+              console.error(`Google Calendar API error for ${member.name}:`, await freeBusyRes.text());
+            }
+          } catch (e) {
+            console.error(`Google Calendar check failed for ${member.name}:`, e);
           }
-          busyPeriods.push(...events.map((e) => ({ start: e.start, end: e.end })));
-        } catch (e) {
-          console.error(`iCal fetch failed for member ${member.name}:`, e);
         }
       }),
     );

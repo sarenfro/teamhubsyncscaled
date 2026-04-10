@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { redirect_uri } = await req.json();
+    const { redirect_uri, team_member_id } = await req.json();
 
     // Get user from JWT
     const authHeader = req.headers.get("Authorization");
@@ -47,8 +47,8 @@ serve(async (req) => {
 
     const callbackUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/google-calendar-callback`;
 
-    // State contains user_id and redirect_uri
-    const state = btoa(JSON.stringify({ user_id: user.id, redirect_uri: redirect_uri || "" }));
+    // State contains user_id, redirect_uri, and optional team_member_id
+    const state = btoa(JSON.stringify({ user_id: user.id, redirect_uri: redirect_uri || "", team_member_id: team_member_id || null }));
 
     const params = new URLSearchParams({
       client_id: clientId,

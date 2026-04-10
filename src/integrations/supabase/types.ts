@@ -225,6 +225,7 @@ export type Database = {
           created_at: string
           id: string
           refresh_token: string
+          team_member_id: string | null
           token_expires_at: string
           updated_at: string
           user_id: string
@@ -235,6 +236,7 @@ export type Database = {
           created_at?: string
           id?: string
           refresh_token: string
+          team_member_id?: string | null
           token_expires_at: string
           updated_at?: string
           user_id: string
@@ -245,11 +247,20 @@ export type Database = {
           created_at?: string
           id?: string
           refresh_token?: string
+          team_member_id?: string | null
           token_expires_at?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "google_calendar_tokens_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
