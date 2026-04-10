@@ -51,9 +51,6 @@ const Auth = () => {
     });
     return () => subscription.unsubscribe();
   }, [navigate]);
-      className: "bg-[hsl(214,100%,50%)] text-white border-none",
-    });
-  };
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
