@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -22,6 +23,7 @@ interface Member {
 
 const AdminMembers = () => {
   const { slug } = useParams<{ slug: string }>();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [teamId, setTeamId] = useState<string | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
@@ -33,15 +35,7 @@ const AdminMembers = () => {
   const [addingMember, setAddingMember] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem(`team_auth_${slug}`);
-    if (!token) { navigate(`/login/${slug}`); return; }
-    try {
-      const parsed = JSON.parse(token);
-      if (!parsed.authorized) { navigate(`/login/${slug}`); return; }
-    } catch {
-      navigate(`/login/${slug}`);
-      return;
-    }
+    if (authLoading || !user) return;
 
     const load = async () => {
       const { data: team } = await supabase
