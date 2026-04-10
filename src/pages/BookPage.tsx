@@ -99,6 +99,7 @@ const BookPage = () => {
           meeting_date: selectedDate!.toISOString().split("T")[0],
           meeting_time: selectedTime!,
           duration_minutes: 30,
+          app_url: window.location.origin,
         },
       });
       setStep("confirmed");

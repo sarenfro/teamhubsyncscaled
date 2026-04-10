@@ -29,7 +29,7 @@ function generateICS(params: {
 
   const [y, m, d] = dateStr.split("-").map(Number);
 
-  // Convert Seattle local time to UTC (try PDT then PST)
+  // Convert America/Los_Angeles local time to UTC
   let startUTC = new Date(Date.UTC(y, m - 1, d, hours + 8, minutes));
   for (const offset of [7, 8]) {
     const testDate = new Date(Date.UTC(y, m - 1, d, hours + offset, minutes));
@@ -77,7 +77,7 @@ async function sendBrevoEmail(params: {
   toName: string;
   subject: string;
   htmlContent: string;
-  icsContent: string;
+  icsContent?: string;
 }): Promise<void> {
   const apiKey = Deno.env.get("BREVO_API_KEY");
   if (!apiKey) {
@@ -85,25 +85,20 @@ async function sendBrevoEmail(params: {
     return;
   }
 
-  const body = {
+  const body: Record<string, unknown> = {
     to: [{ email: params.toEmail, name: params.toName }],
     subject: params.subject,
     htmlContent: params.htmlContent,
-    attachment: [
-      {
-        name: "meeting.ics",
-        content: btoa(params.icsContent),
-      },
-    ],
     sender: { name: "Team Booking", email: "noreply@teambooking.app" },
   };
 
+  if (params.icsContent) {
+    body.attachment = [{ name: "meeting.ics", content: btoa(params.icsContent) }];
+  }
+
   const response = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "api-key": apiKey,
-    },
+    headers: { "Content-Type": "application/json", "api-key": apiKey },
     body: JSON.stringify(body),
   });
 
@@ -127,6 +122,7 @@ serve(async (req) => {
       meeting_date,
       meeting_time,
       duration_minutes = 30,
+      app_url,
     } = await req.json();
 
     if (!booker_name || !booker_email || !meeting_date || !meeting_time) {
@@ -145,6 +141,9 @@ serve(async (req) => {
       ? team_member_ids
       : [team_member_ids].filter(Boolean);
 
+    // Single cancellation token shared across all bookings in this session
+    const cancellationToken = crypto.randomUUID();
+
     // Insert one booking row per selected member
     for (const memberId of memberIds) {
       await supabase.from("bookings").insert({
@@ -157,13 +156,14 @@ serve(async (req) => {
         meeting_time,
         duration_minutes,
         status: "confirmed",
+        cancellation_token: cancellationToken,
       });
     }
 
-    // Fetch member names for the confirmation email
+    // Fetch member names and emails for notifications
     const { data: members } = await supabase
       .from("team_members")
-      .select("name")
+      .select("name, email")
       .in("id", memberIds);
 
     const memberNames = (members ?? []).map((m: { name: string }) => m.name);
@@ -176,7 +176,6 @@ serve(async (req) => {
 
     const meetingTitle = `Meeting with ${memberLabel}`;
 
-    // Generate ICS
     const icsContent = generateICS({
       title: meetingTitle,
       dateStr: meeting_date,
@@ -187,8 +186,16 @@ serve(async (req) => {
       organizerName: memberLabel,
     });
 
-    // Send confirmation email via Brevo
-    const htmlContent = `
+    const cancelUrl = app_url
+      ? `${app_url}/cancel?token=${cancellationToken}`
+      : null;
+
+    const cancelBlock = cancelUrl
+      ? `<p style="margin-top: 16px;">Changed your mind? <a href="${cancelUrl}" style="color: #cc0000;">Cancel this appointment</a></p>`
+      : "";
+
+    // Confirmation email to booker
+    const bookerHtml = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #1a1a2e;">
         <h2 style="color: #0066ff;">Meeting Confirmed!</h2>
         <p>Hi ${booker_name},</p>
@@ -202,6 +209,7 @@ serve(async (req) => {
         </div>
         <p>A calendar invite (.ics) is attached to this email.</p>
         <p>Web conferencing details will be provided before the meeting.</p>
+        ${cancelBlock}
         <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 24px 0;">
         <p style="font-size: 12px; color: #666;">Powered by Team Booking</p>
       </div>
@@ -211,11 +219,42 @@ serve(async (req) => {
       toEmail: booker_email,
       toName: booker_name,
       subject: `Confirmed: ${meetingTitle}`,
-      htmlContent,
+      htmlContent: bookerHtml,
       icsContent,
     });
 
-    return new Response(JSON.stringify({ success: true }), {
+    // Notification emails to each booked team member
+    for (const member of (members ?? []) as { name: string; email: string | null }[]) {
+      if (!member.email) continue;
+
+      const memberHtml = `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #1a1a2e;">
+          <h2 style="color: #0066ff;">New Meeting Booked</h2>
+          <p>Hi ${member.name},</p>
+          <p>A new meeting has been scheduled with you:</p>
+          <div style="background: #f0f4ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin: 0 0 8px;"><strong>Booker:</strong> ${booker_name} (${booker_email})</p>
+            <p style="margin: 0 0 8px;"><strong>Date:</strong> ${meeting_date}</p>
+            <p style="margin: 0 0 8px;"><strong>Time:</strong> ${meeting_time} (America/Los_Angeles)</p>
+            <p style="margin: 0 0 8px;"><strong>Duration:</strong> ${duration_minutes} minutes</p>
+            ${notes ? `<p style="margin: 0;"><strong>Notes:</strong> ${notes}</p>` : ""}
+          </div>
+          <p>A calendar invite (.ics) is attached for your records.</p>
+          <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 24px 0;">
+          <p style="font-size: 12px; color: #666;">Powered by Team Booking</p>
+        </div>
+      `;
+
+      await sendBrevoEmail({
+        toEmail: member.email,
+        toName: member.name,
+        subject: `New booking: ${booker_name} on ${meeting_date} at ${meeting_time}`,
+        htmlContent: memberHtml,
+        icsContent,
+      });
+    }
+
+    return new Response(JSON.stringify({ success: true, cancellationToken }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
