@@ -43,6 +43,11 @@ interface Booking {
   duration_minutes: number | null;
 }
 
+interface BusyPeriod {
+  start: string; // HH:MM
+  end: string;   // HH:MM
+}
+
 const LOCATION_LABELS: Record<string, string> = {
   google_meet: "Google Meet",
   zoom: "Zoom",
@@ -187,21 +192,59 @@ const PersonalBooking = () => {
     const now = new Date();
     const minNoticeTime = new Date(now.getTime() + selectedEvent.min_notice_minutes * 60 * 1000);
 
-    const filtered = allSlots.filter((slot) => {
-      if (bookedTimes.includes(slot)) return false;
-
-      if (dateStr === format(now, "yyyy-MM-dd")) {
-        const [h, m] = slot.split(":").map(Number);
-        const slotDate = new Date(selectedDate);
-        slotDate.setHours(h, m, 0, 0);
-        if (isBefore(slotDate, minNoticeTime)) return false;
+    // Fetch Google Calendar busy times
+    const fetchAndFilter = async () => {
+      let gcalBusy: BusyPeriod[] = [];
+      if (profile?.user_id) {
+        try {
+          const res = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/google-calendar-busy?user_id=${profile.user_id}&date=${dateStr}`,
+            {
+              headers: {
+                apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+                Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+              },
+            },
+          );
+          if (res.ok) {
+            const data = await res.json();
+            gcalBusy = data.busy_times || [];
+          }
+        } catch {
+          // Ignore — proceed without Google Calendar data
+        }
       }
 
-      return true;
-    });
+      const filtered = allSlots.filter((slot) => {
+        if (bookedTimes.includes(slot)) return false;
 
-    setAvailableSlots(filtered);
-    setSelectedTime(null);
+        const [slotH, slotM] = slot.split(":").map(Number);
+        const slotStartMin = slotH * 60 + slotM;
+        const slotEndMin = slotStartMin + selectedEvent.duration_minutes;
+
+        // Check Google Calendar conflicts
+        for (const busy of gcalBusy) {
+          const [bsH, bsM] = busy.start.split(":").map(Number);
+          const [beH, beM] = busy.end.split(":").map(Number);
+          const busyStart = bsH * 60 + bsM;
+          const busyEnd = beH * 60 + beM;
+          if (slotStartMin < busyEnd && slotEndMin > busyStart) return false;
+        }
+
+        if (dateStr === format(now, "yyyy-MM-dd")) {
+          const slotDate = new Date(selectedDate);
+          slotDate.setHours(slotH, slotM, 0, 0);
+          if (isBefore(slotDate, minNoticeTime)) return false;
+        }
+
+        return true;
+      });
+
+      setAvailableSlots(filtered);
+      setSelectedTime(null);
+    };
+
+    fetchAndFilter();
   }, [selectedDate, selectedEvent, schedule, existingBookings]);
 
   const isDateDisabled = (date: Date) => {

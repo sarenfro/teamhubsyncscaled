@@ -17,6 +17,8 @@ import AdminMembers from "./pages/AdminMembers.tsx";
 import AdminBookings from "./pages/AdminBookings.tsx";
 import Embed from "./pages/Embed.tsx";
 import CancelBooking from "./pages/CancelBooking.tsx";
+import Integrations from "./pages/Integrations.tsx";
+import RoutingForms from "./pages/RoutingForms.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -43,6 +45,8 @@ const App = () => (
           <Route path="/admin/:slug/bookings" element={<AdminBookings />} />
           <Route path="/embed" element={<Embed />} />
           <Route path="/cancel" element={<CancelBooking />} />
+          <Route path="/integrations" element={<Integrations />} />
+          <Route path="/routing-forms" element={<RoutingForms />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
