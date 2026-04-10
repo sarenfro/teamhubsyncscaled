@@ -6,8 +6,11 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Landing from "./pages/Landing.tsx";
 import Auth from "./pages/Auth.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
+import Onboarding from "./pages/Onboarding.tsx";
+import EventTypes from "./pages/EventTypes.tsx";
 import CreateTeam from "./pages/CreateTeam.tsx";
 import BookPage from "./pages/BookPage.tsx";
+import PersonalBooking from "./pages/PersonalBooking.tsx";
 import Admin from "./pages/Admin.tsx";
 import AdminMembers from "./pages/AdminMembers.tsx";
 import AdminBookings from "./pages/AdminBookings.tsx";
@@ -27,8 +30,12 @@ const App = () => (
           <Route path="/" element={<Landing />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/event-types" element={<EventTypes />} />
           <Route path="/create" element={<CreateTeam />} />
           <Route path="/book/:slug" element={<BookPage />} />
+          <Route path="/u/:userSlug" element={<PersonalBooking />} />
+          <Route path="/u/:userSlug/:eventSlug" element={<PersonalBooking />} />
           <Route path="/admin/:slug" element={<Admin />} />
           <Route path="/admin/:slug/members" element={<AdminMembers />} />
           <Route path="/admin/:slug/bookings" element={<AdminBookings />} />
