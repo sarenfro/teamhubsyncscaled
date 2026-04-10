@@ -475,9 +475,14 @@ serve(async (req) => {
             headers: { "User-Agent": "TeamBooking/1.0" },
             signal: AbortSignal.timeout(8000),
           });
-          if (!response.ok) return;
+          if (!response.ok) {
+            console.error(`iCal fetch returned ${response.status} for member ${member.name}`);
+            return;
+          }
           const icalText = await response.text();
+          console.log(`iCal for ${member.name}: ${icalText.length} chars, VEVENT count: ${(icalText.match(/BEGIN:VEVENT/g) || []).length}`);
           const events = parseIcalForDate(icalText, dateStr);
+          console.log(`Parsed ${events.length} busy events for ${member.name} on ${dateStr}:`, events.map(e => `${e.start.toISOString()}-${e.end.toISOString()}`));
           busyPeriods.push(...events.map((e) => ({ start: e.start, end: e.end })));
         } catch (e) {
           console.error(`iCal fetch failed for member ${member.name}:`, e);
