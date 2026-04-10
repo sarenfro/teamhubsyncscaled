@@ -188,6 +188,7 @@ serve(async (req) => {
       bookerName: booker_name,
       bookerEmail: booker_email,
       organizerName: memberLabel,
+      uid: icsUid,
     });
 
     const cancelUrl = app_url
