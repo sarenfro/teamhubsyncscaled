@@ -14,6 +14,16 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const isUwEmail = (emailAddr: string) => emailAddr.trim().toLowerCase().endsWith("@uw.edu");
+
+  const showUwError = () => {
+    toast({
+      title: "UW Email Required",
+      description: "Only @uw.edu email addresses are allowed to create accounts at this time.",
+      className: "bg-[hsl(214,100%,50%)] text-white border-none",
+    });
+  };
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
@@ -41,13 +51,6 @@ const Auth = () => {
     });
     return () => subscription.unsubscribe();
   }, [navigate]);
-
-  const isUwEmail = (emailAddr: string) => emailAddr.trim().toLowerCase().endsWith("@uw.edu");
-
-  const showUwError = () => {
-    toast({
-      title: "UW Email Required",
-      description: "Only @uw.edu email addresses are allowed to create accounts at this time.",
       className: "bg-[hsl(214,100%,50%)] text-white border-none",
     });
   };
