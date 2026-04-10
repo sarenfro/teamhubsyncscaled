@@ -201,19 +201,49 @@ const Dashboard = () => {
         ) : (
           <div className="space-y-3">
             {teams.map((t) => (
-              <Link
+              <div
                 key={t.team_id}
-                to={`/admin/${t.team?.slug}`}
                 className="flex items-center justify-between rounded-xl border border-border p-5 hover:bg-accent/50 transition-colors"
               >
-                <div>
+                <Link to={`/admin/${t.team?.slug}`} className="flex-1">
                   <p className="font-medium text-foreground">{t.team?.name}</p>
                   <p className="text-sm text-muted-foreground">/book/{t.team?.slug}</p>
+                </Link>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs px-2.5 py-1 rounded-full bg-booking-hero-light text-booking-hero font-medium capitalize">
+                    {t.role}
+                  </span>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete "{t.team?.name}"?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will permanently delete this team, all its members, bookings, and event types. This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDeleteTeam(t.team_id)}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Delete Team
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
-                <span className="text-xs px-2.5 py-1 rounded-full bg-booking-hero-light text-booking-hero font-medium capitalize">
-                  {t.role}
-                </span>
-              </Link>
+              </div>
             ))}
           </div>
         )}
