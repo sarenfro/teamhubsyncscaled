@@ -17,6 +17,7 @@ const Index = () => {
   const [bookerName, setBookerName] = useState("");
   const [bookerEmail, setBookerEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [cancellationToken, setCancellationToken] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchMembers = async () => {
@@ -61,7 +62,7 @@ const Index = () => {
     setBookerEmail(data.email);
 
     try {
-      await supabase.functions.invoke("create-booking", {
+      const { data: respData } = await supabase.functions.invoke("create-booking", {
         body: {
           team_member_ids: selectedMembers.map((m) => m.id),
           booker_name: data.name,
@@ -70,9 +71,10 @@ const Index = () => {
           meeting_date: selectedDate!.toISOString().split("T")[0],
           meeting_time: selectedTime!,
           duration_minutes: 30,
+          app_url: window.location.origin,
         },
       });
-
+      setCancellationToken(respData?.cancellationToken ?? null);
       setStep("confirmed");
     } catch (err) {
       console.error("Booking failed:", err);
@@ -82,6 +84,7 @@ const Index = () => {
   };
 
   const handleReset = () => {
+    setCancellationToken(null);
     setStep("select-member");
     setSelectedMembers([]);
     setSelectedDate(null);
@@ -132,6 +135,7 @@ const Index = () => {
               time={selectedTime}
               bookerName={bookerName}
               bookerEmail={bookerEmail}
+              cancellationToken={cancellationToken}
               onReset={handleReset}
             />
           )}
