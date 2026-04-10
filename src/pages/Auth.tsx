@@ -100,6 +100,11 @@ const Auth = () => {
           <p className="text-sm text-muted-foreground">
             {isLogin ? "Sign in to manage your teams" : "Sign up to start scheduling"}
           </p>
+          {!isLogin && (
+            <p className="text-xs text-booking-hero font-medium">
+              Only @uw.edu email addresses are accepted
+            </p>
+          )}
         </div>
 
         <Button
