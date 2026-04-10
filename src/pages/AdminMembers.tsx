@@ -9,6 +9,7 @@ import { ChevronLeft, Plus, Trash2 } from "lucide-react";
 interface Member {
   id: string;
   name: string;
+  email: string | null;
   ical_url: string | null;
   is_active: boolean;
   color_index: number;
@@ -21,6 +22,7 @@ const AdminMembers = () => {
   const [members, setMembers] = useState<Member[]>([]);
   const [icalInputs, setIcalInputs] = useState<Record<string, string>>({});
   const [nameInputs, setNameInputs] = useState<Record<string, string>>({});
+  const [emailInputs, setEmailInputs] = useState<Record<string, string>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
   const [addingMember, setAddingMember] = useState(false);
@@ -47,19 +49,22 @@ const AdminMembers = () => {
 
       const { data: mData } = await supabase
         .from("team_members")
-        .select("id, name, ical_url, is_active, color_index")
+        .select("id, name, email, ical_url, is_active, color_index")
         .eq("team_id", team.id)
         .order("created_at");
       if (mData) {
         setMembers(mData);
         const ic: Record<string, string> = {};
         const nm: Record<string, string> = {};
+        const em: Record<string, string> = {};
         mData.forEach((m) => {
           ic[m.id] = m.ical_url ?? "";
           nm[m.id] = m.name;
+          em[m.id] = m.email ?? "";
         });
         setIcalInputs(ic);
         setNameInputs(nm);
+        setEmailInputs(em);
       }
     };
     load();
@@ -71,13 +76,14 @@ const AdminMembers = () => {
       .from("team_members")
       .update({
         name: nameInputs[member.id] || member.name,
+        email: emailInputs[member.id] || null,
         ical_url: icalInputs[member.id] || null,
       })
       .eq("id", member.id);
     setMembers((prev) =>
       prev.map((m) =>
         m.id === member.id
-          ? { ...m, name: nameInputs[member.id] || m.name, ical_url: icalInputs[member.id] || null }
+          ? { ...m, name: nameInputs[member.id] || m.name, email: emailInputs[member.id] || null, ical_url: icalInputs[member.id] || null }
           : m,
       ),
     );
@@ -113,6 +119,7 @@ const AdminMembers = () => {
       setMembers((prev) => [...prev, data]);
       setIcalInputs((prev) => ({ ...prev, [data.id]: "" }));
       setNameInputs((prev) => ({ ...prev, [data.id]: data.name }));
+      setEmailInputs((prev) => ({ ...prev, [data.id]: "" }));
       setNewName("");
     }
     setAddingMember(false);
@@ -158,6 +165,15 @@ const AdminMembers = () => {
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
+              <Input
+                value={emailInputs[member.id] ?? ""}
+                onChange={(e) =>
+                  setEmailInputs((prev) => ({ ...prev, [member.id]: e.target.value }))
+                }
+                placeholder="Member email address"
+                type="email"
+                className="text-sm"
+              />
               <div className="flex gap-2">
                 <Input
                   value={icalInputs[member.id] ?? ""}
