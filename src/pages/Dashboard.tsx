@@ -257,6 +257,11 @@ const Dashboard = () => {
                       <DoorOpen className="h-4 w-4" />
                     </Button>
                   )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className="flex gap-3">
           <Button variant="booking" onClick={() => navigate("/create")} className="flex-1">
