@@ -135,6 +135,7 @@ const Index = () => {
               time={selectedTime}
               bookerName={bookerName}
               bookerEmail={bookerEmail}
+              cancellationToken={cancellationToken}
               onReset={handleReset}
             />
           )}
