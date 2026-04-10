@@ -231,23 +231,32 @@ const Dashboard = () => {
                   <span className="text-xs px-2.5 py-1 rounded-full bg-booking-hero-light text-booking-hero font-medium capitalize">
                     {t.role}
                   </span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setPendingDeleteTeam({ id: t.team_id, name: t.team?.name || "" });
-                      setDeleteStep(1);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+                  {t.role === "owner" ? (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setPendingDeleteTeam({ id: t.team_id, name: t.team?.name || "" });
+                        setDeleteStep(1);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-orange-500"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setPendingLeaveTeam({ id: t.team_id, name: t.team?.name || "" });
+                      }}
+                    >
+                      <DoorOpen className="h-4 w-4" />
+                    </Button>
+                  )}
 
         <div className="flex gap-3">
           <Button variant="booking" onClick={() => navigate("/create")} className="flex-1">
