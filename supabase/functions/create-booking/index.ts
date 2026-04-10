@@ -143,6 +143,8 @@ serve(async (req) => {
 
     // Single cancellation token shared across all bookings in this session
     const cancellationToken = crypto.randomUUID();
+    // Single ICS UID shared across all bookings so cancellation can reference it
+    const icsUid = `${Date.now()}-${Math.random().toString(36).slice(2)}@teambooking`;
 
     // Insert one booking row per selected member
     for (const memberId of memberIds) {
@@ -157,6 +159,7 @@ serve(async (req) => {
         duration_minutes,
         status: "confirmed",
         cancellation_token: cancellationToken,
+        ics_uid: icsUid,
       });
     }
 
