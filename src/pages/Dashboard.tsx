@@ -269,6 +269,64 @@ const Dashboard = () => {
             </Button>
           </div>
         )}
+
+        {/* Two-step delete confirmation */}
+        <AlertDialog
+          open={pendingDeleteTeam !== null}
+          onOpenChange={(open) => {
+            if (!open) {
+              setPendingDeleteTeam(null);
+              setDeleteStep(1);
+            }
+          }}
+        >
+          <AlertDialogContent>
+            {deleteStep === 1 ? (
+              <>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete "{pendingDeleteTeam?.name}"?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete this team, all its members, bookings, and event types. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setDeleteStep(2);
+                    }}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Continue
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </>
+            ) : (
+              <>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Please confirm that you have checked with everyone on the team and they no longer need this scheduling page. Once deleted, all data is gone forever.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => {
+                      if (pendingDeleteTeam) handleDeleteTeam(pendingDeleteTeam.id);
+                      setPendingDeleteTeam(null);
+                      setDeleteStep(1);
+                    }}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Yes, Delete Team Permanently
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </>
+            )}
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
