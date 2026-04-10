@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Copy, Check, Users, Calendar } from "lucide-react";
+import TeamAdminManager from "@/components/TeamAdminManager";
 
 interface Member {
   id: string;
@@ -220,6 +221,9 @@ const Admin = () => {
             ))}
           </div>
         </div>
+
+        {/* Team Admins */}
+        {teamId && user && <TeamAdminManager teamId={teamId} currentUserId={user.id} />}
 
         {/* Bookings */}
         <div className="rounded-xl border border-border p-6 space-y-3">
