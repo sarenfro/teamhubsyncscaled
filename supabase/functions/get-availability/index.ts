@@ -51,16 +51,20 @@ const TIMEZONE_MAP: Record<string, string> = {
 };
 
 function normalizeTimezone(tzid: string): string {
-  // Already valid IANA? Try it.
-  if (tzid.includes("/")) return tzid;
+  // Strip surrounding quotes
+  const cleaned = tzid.replace(/^["']|["']$/g, "").trim();
+  // Common valid names
+  if (cleaned === "UTC" || cleaned === "GMT") return "Etc/UTC";
+  // Already valid IANA?
+  if (cleaned.includes("/")) return cleaned;
   // Look up in our map (case-insensitive)
-  const mapped = TIMEZONE_MAP[tzid] ||
+  const mapped = TIMEZONE_MAP[cleaned] ||
     Object.entries(TIMEZONE_MAP).find(
-      ([k]) => k.toLowerCase() === tzid.toLowerCase(),
+      ([k]) => k.toLowerCase() === cleaned.toLowerCase(),
     )?.[1];
   if (mapped) return mapped;
-  // Last resort: return original and let it fail gracefully
-  console.warn(`Unknown timezone: ${tzid}, falling back to ${TIMEZONE}`);
+  // Last resort
+  console.warn(`Unknown timezone: ${cleaned}, falling back to ${TIMEZONE}`);
   return TIMEZONE;
 }
 
