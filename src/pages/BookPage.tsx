@@ -22,6 +22,7 @@ const BookPage = () => {
   const [bookerName, setBookerName] = useState("");
   const [bookerEmail, setBookerEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [cancellationToken, setCancellationToken] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -84,24 +85,25 @@ const BookPage = () => {
     setStep("enter-details");
   };
 
-  const handleFormSubmit = async (data: { name: string; email: string; notes: string }) => {
+  const handleFormSubmit = async (data2: { name: string; email: string; notes: string }) => {
     setIsSubmitting(true);
-    setBookerName(data.name);
-    setBookerEmail(data.email);
+    setBookerName(data2.name);
+    setBookerEmail(data2.email);
     try {
-      await supabase.functions.invoke("create-booking", {
+      const { data } = await supabase.functions.invoke("create-booking", {
         body: {
           team_id: teamId,
           team_member_ids: selectedMembers.map((m) => m.id),
-          booker_name: data.name,
-          booker_email: data.email,
-          notes: data.notes,
+          booker_name: data2.name,
+          booker_email: data2.email,
+          notes: data2.notes,
           meeting_date: selectedDate!.toISOString().split("T")[0],
           meeting_time: selectedTime!,
           duration_minutes: 30,
           app_url: window.location.origin,
         },
       });
+      setCancellationToken(data?.cancellationToken ?? null);
       setStep("confirmed");
     } catch (err) {
       console.error("Booking failed:", err);
@@ -111,6 +113,7 @@ const BookPage = () => {
   };
 
   const handleReset = () => {
+    setCancellationToken(null);
     setStep("select-member");
     setSelectedMembers([]);
     setSelectedDate(null);
