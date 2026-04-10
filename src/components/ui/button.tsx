@@ -15,6 +15,10 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        booking: "bg-booking-hero text-primary-foreground hover:bg-booking-hero/90 rounded-full font-semibold",
+        "booking-outline": "border-2 border-booking-hero text-booking-hero hover:bg-booking-hover rounded-full font-semibold",
+        "booking-time": "border border-booking-hero text-booking-hero hover:bg-booking-hover rounded-lg font-medium w-full justify-center",
+        "booking-time-selected": "bg-booking-selected text-booking-selected-foreground rounded-lg font-medium w-full justify-center",
       },
       size: {
         default: "h-10 px-4 py-2",
