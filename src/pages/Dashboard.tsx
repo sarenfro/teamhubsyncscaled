@@ -30,6 +30,8 @@ const Dashboard = () => {
   const { toast } = useToast();
   const [teams, setTeams] = useState<TeamWithRole[]>([]);
   const [loadingTeams, setLoadingTeams] = useState(true);
+  const [pendingDeleteTeam, setPendingDeleteTeam] = useState<{ id: string; name: string } | null>(null);
+  const [deleteStep, setDeleteStep] = useState<1 | 2>(1);
 
   // Claim team state
   const [showClaim, setShowClaim] = useState(false);
