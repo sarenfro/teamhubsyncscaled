@@ -67,7 +67,7 @@ const AdminMembers = () => {
       }
     };
     load();
-  }, [slug, navigate]);
+  }, [slug, user, authLoading]);
 
   const handleSave = async (member: Member) => {
     setSavingId(member.id);

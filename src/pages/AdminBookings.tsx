@@ -51,7 +51,7 @@ const AdminBookings = () => {
       setLoading(false);
     };
     load();
-  }, [slug, navigate]);
+  }, [slug, user, authLoading]);
 
   return (
     <div className="min-h-screen bg-background">
