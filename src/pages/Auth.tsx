@@ -26,8 +26,22 @@ const Auth = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  const isUwEmail = (emailAddr: string) => emailAddr.trim().toLowerCase().endsWith("@uw.edu");
+
+  const showUwError = () => {
+    toast({
+      title: "UW Email Required",
+      description: "Only @uw.edu email addresses are allowed to create accounts at this time.",
+      className: "bg-[hsl(214,100%,50%)] text-white border-none",
+    });
+  };
+
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isLogin && !isUwEmail(email)) {
+      showUwError();
+      return;
+    }
     setLoading(true);
     try {
       if (isLogin) {
@@ -53,6 +67,7 @@ const Auth = () => {
   const handleGoogleSignIn = async () => {
     const result = await lovable.auth.signInWithOAuth("google", {
       redirect_uri: window.location.origin,
+      extraParams: { hd: "uw.edu" },
     });
     if (result.error) {
       toast({ title: "Error", description: String(result.error), variant: "destructive" });
