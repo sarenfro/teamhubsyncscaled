@@ -16,7 +16,7 @@ function generateICS(params: {
   organizerName: string;
   uid: string;
 }): string {
-  const { title, dateStr, timeStr, durationMinutes, bookerName, bookerEmail, organizerName } =
+  const { title, dateStr, timeStr, durationMinutes, bookerName, bookerEmail, organizerName, uid } =
     params;
 
   const timeMatch = timeStr.match(/^(\d{1,2}):(\d{2})\s*(am|pm)$/i);
