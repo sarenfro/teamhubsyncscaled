@@ -19,6 +19,7 @@ import type { TeamMember } from "./TeamMemberSelect";
 
 interface DateTimePickerProps {
   members: TeamMember[];
+  teamId?: string;
   onSelect: (date: Date, time: string) => void;
   onBack: () => void;
 }
@@ -34,7 +35,7 @@ function formatMemberNames(members: TeamMember[]): string {
   return firsts.slice(0, -1).join(", ") + " & " + firsts[firsts.length - 1];
 }
 
-const DateTimePicker = ({ members, onSelect, onBack }: DateTimePickerProps) => {
+const DateTimePicker = ({ members, teamId, onSelect, onBack }: DateTimePickerProps) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -66,7 +67,9 @@ const DateTimePicker = ({ members, onSelect, onBack }: DateTimePickerProps) => {
       const memberIds = members.map((m) => m.id).join(",");
 
       try {
-        const params = new URLSearchParams({ date: dateStr, member_ids: memberIds });
+        const queryParams: Record<string, string> = { date: dateStr, member_ids: memberIds };
+        if (teamId) queryParams.team_id = teamId;
+        const params = new URLSearchParams(queryParams);
 
         const res = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-availability?${params.toString()}`,

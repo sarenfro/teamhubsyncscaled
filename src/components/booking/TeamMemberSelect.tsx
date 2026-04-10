@@ -4,9 +4,6 @@ import { Button } from "@/components/ui/button";
 export interface TeamMember {
   id: string;
   name: string;
-  role: string;
-  avatar?: string;
-  calendarType: "google" | "outlook";
   colorIndex: number;
 }
 
@@ -100,7 +97,6 @@ const TeamMemberSelect = ({ members, selectedIds, onToggle, onSelectAll, onConfi
                 >
                   {member.name}
                 </h3>
-                <p className="text-sm text-muted-foreground">{member.role}</p>
               </div>
 
               <div className="flex items-center gap-4 text-xs text-muted-foreground">

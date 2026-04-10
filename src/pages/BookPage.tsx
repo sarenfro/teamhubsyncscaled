@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useParams, Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import TeamMemberSelect, { type TeamMember } from "@/components/booking/TeamMemberSelect";
 import DateTimePicker from "@/components/booking/DateTimePicker";
@@ -7,8 +8,13 @@ import BookingConfirmation from "@/components/booking/BookingConfirmation";
 
 type Step = "select-member" | "select-datetime" | "enter-details" | "confirmed";
 
-const Embed = () => {
+const BookPage = () => {
+  const { slug } = useParams<{ slug: string }>();
   const [step, setStep] = useState<Step>("select-member");
+  const [teamId, setTeamId] = useState<string | null>(null);
+  const [teamName, setTeamName] = useState("");
+  const [notFound, setNotFound] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<TeamMember[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -18,24 +24,50 @@ const Embed = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    const fetchMembers = async () => {
-      const { data } = await supabase.from("team_members").select("*").eq("is_active", true).order("color_index");
-      if (data) {
+    const load = async () => {
+      const { data: team } = await supabase
+        .from("teams")
+        .select("id, name")
+        .eq("slug", slug!)
+        .maybeSingle();
+
+      if (!team) {
+        setNotFound(true);
+        setLoading(false);
+        return;
+      }
+
+      setTeamId(team.id);
+      setTeamName(team.name);
+
+      const { data: mData } = await supabase
+        .from("team_members")
+        .select("id, name, color_index")
+        .eq("team_id", team.id)
+        .eq("is_active", true)
+        .order("created_at");
+
+      if (mData) {
         setMembers(
-          data.map((m) => ({
+          mData.map((m) => ({
             id: m.id,
             name: m.name,
             colorIndex: m.color_index ?? 0,
           })),
         );
       }
+      setLoading(false);
     };
-    fetchMembers();
-  }, []);
+    load();
+  }, [slug]);
+
+  if (notFound) return <Navigate to="/" replace />;
 
   const handleMemberToggle = (member: TeamMember) => {
     setSelectedMembers((prev) =>
-      prev.some((m) => m.id === member.id) ? prev.filter((m) => m.id !== member.id) : [...prev, member],
+      prev.some((m) => m.id === member.id)
+        ? prev.filter((m) => m.id !== member.id)
+        : [...prev, member],
     );
   };
 
@@ -44,9 +76,7 @@ const Embed = () => {
     setStep("select-datetime");
   };
 
-  const handleConfirmSelection = () => {
-    setStep("select-datetime");
-  };
+  const handleConfirmSelection = () => setStep("select-datetime");
 
   const handleDateTimeSelect = (date: Date, time: string) => {
     setSelectedDate(date);
@@ -58,10 +88,10 @@ const Embed = () => {
     setIsSubmitting(true);
     setBookerName(data.name);
     setBookerEmail(data.email);
-
     try {
       await supabase.functions.invoke("create-booking", {
         body: {
+          team_id: teamId,
           team_member_ids: selectedMembers.map((m) => m.id),
           booker_name: data.name,
           booker_email: data.email,
@@ -71,7 +101,6 @@ const Embed = () => {
           duration_minutes: 30,
         },
       });
-
       setStep("confirmed");
     } catch (err) {
       console.error("Booking failed:", err);
@@ -89,9 +118,22 @@ const Embed = () => {
     setBookerEmail("");
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-background p-2 sm:p-4">
-      <div className="mx-auto max-w-4xl">
+    <div className="min-h-screen bg-background">
+      <div className="mx-auto max-w-4xl px-4 py-6">
+        <div className="mb-6 text-center">
+          <h1 className="text-2xl font-bold text-foreground">{teamName}</h1>
+          <p className="text-sm text-muted-foreground">Schedule a meeting with the team</p>
+        </div>
+
         {step === "select-member" && (
           <TeamMemberSelect
             members={members}
@@ -102,9 +144,10 @@ const Embed = () => {
           />
         )}
 
-        {step === "select-datetime" && selectedMembers.length > 0 && (
+        {step === "select-datetime" && selectedMembers.length > 0 && teamId && (
           <DateTimePicker
             members={selectedMembers}
+            teamId={teamId}
             onSelect={handleDateTimeSelect}
             onBack={() => setStep("select-member")}
           />
@@ -131,9 +174,13 @@ const Embed = () => {
             onReset={handleReset}
           />
         )}
+
+        <div className="mt-12 text-center">
+          <p className="text-xs text-muted-foreground">Powered by Team Scheduler</p>
+        </div>
       </div>
     </div>
   );
 };
 
-export default Embed;
+export default BookPage;

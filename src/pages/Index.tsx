@@ -26,9 +26,7 @@ const Index = () => {
           data.map((m) => ({
             id: m.id,
             name: m.name,
-            role: m.role ?? "",
-            calendarType: m.calendar_type as "google" | "outlook",
-            colorIndex: m.color_index,
+            colorIndex: m.color_index ?? 0,
           })),
         );
       }
