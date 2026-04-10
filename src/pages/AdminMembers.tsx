@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { ChevronLeft, Plus, Trash2, HelpCircle } from "lucide-react";
+import { toast } from "sonner";
 import {
   Popover,
   PopoverContent,
@@ -71,7 +72,7 @@ const AdminMembers = () => {
 
   const handleSave = async (member: Member) => {
     setSavingId(member.id);
-    await supabase
+    const { error } = await supabase
       .from("team_members")
       .update({
         name: nameInputs[member.id] || member.name,
@@ -79,47 +80,66 @@ const AdminMembers = () => {
         ical_url: icalInputs[member.id] || null,
       })
       .eq("id", member.id);
-    setMembers((prev) =>
-      prev.map((m) =>
-        m.id === member.id
-          ? { ...m, name: nameInputs[member.id] || m.name, email: emailInputs[member.id] || null, ical_url: icalInputs[member.id] || null }
-          : m,
-      ),
-    );
+    if (error) {
+      toast.error("Couldn't save changes. Please check your inputs and try again.");
+      console.error("Save error:", error);
+    } else {
+      toast.success("Member updated successfully!");
+      setMembers((prev) =>
+        prev.map((m) =>
+          m.id === member.id
+            ? { ...m, name: nameInputs[member.id] || m.name, email: emailInputs[member.id] || null, ical_url: icalInputs[member.id] || null }
+            : m,
+        ),
+      );
+    }
     setSavingId(null);
   };
 
   const handleToggle = async (memberId: string, current: boolean) => {
-    await supabase
+    const { error } = await supabase
       .from("team_members")
       .update({ is_active: !current })
       .eq("id", memberId);
-    setMembers((prev) =>
-      prev.map((m) => (m.id === memberId ? { ...m, is_active: !current } : m)),
-    );
+    if (error) {
+      toast.error("Couldn't update member status. Please try again.");
+    } else {
+      setMembers((prev) =>
+        prev.map((m) => (m.id === memberId ? { ...m, is_active: !current } : m)),
+      );
+      toast.success(!current ? "Member activated" : "Member deactivated");
+    }
   };
 
   const handleDelete = async (memberId: string) => {
     if (!confirm("Remove this member?")) return;
-    await supabase.from("team_members").delete().eq("id", memberId);
-    setMembers((prev) => prev.filter((m) => m.id !== memberId));
+    const { error } = await supabase.from("team_members").delete().eq("id", memberId);
+    if (error) {
+      toast.error("Couldn't remove member. Please try again.");
+    } else {
+      setMembers((prev) => prev.filter((m) => m.id !== memberId));
+      toast.success("Member removed");
+    }
   };
 
   const handleAddMember = async () => {
     if (!newName.trim() || !teamId) return;
     setAddingMember(true);
     const colorIndex = members.length % 4;
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("team_members")
       .insert({ team_id: teamId, name: newName.trim(), color_index: colorIndex })
       .select()
       .single();
-    if (data) {
+    if (error) {
+      toast.error("Couldn't add member. Please try again.");
+    } else if (data) {
       setMembers((prev) => [...prev, data]);
       setIcalInputs((prev) => ({ ...prev, [data.id]: "" }));
       setNameInputs((prev) => ({ ...prev, [data.id]: data.name }));
       setEmailInputs((prev) => ({ ...prev, [data.id]: "" }));
       setNewName("");
+      toast.success("Member added!");
     }
     setAddingMember(false);
   };
