@@ -215,20 +215,18 @@ const Dashboard = () => {
                   <span className="text-xs px-2.5 py-1 rounded-full bg-booking-hero-light text-booking-hero font-medium capitalize">
                     {t.role}
                   </span>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
                   <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setPendingDeleteTeam({ id: t.team_id, name: t.team?.name || "" });
-                          setDeleteStep(1);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setPendingDeleteTeam({ id: t.team_id, name: t.team?.name || "" });
+                      setDeleteStep(1);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             ))}
