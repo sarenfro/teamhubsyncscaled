@@ -23,7 +23,7 @@ serve(async (req) => {
     }
 
     const state = JSON.parse(atob(stateParam));
-    const { user_id, redirect_uri } = state;
+    const { user_id, redirect_uri, team_member_id } = state;
 
     const clientId = Deno.env.get("GOOGLE_CLIENT_ID")!;
     const clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET")!;
@@ -59,16 +59,23 @@ serve(async (req) => {
 
     const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
 
+    // Build upsert record
+    const tokenRecord: Record<string, unknown> = {
+      user_id,
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+      token_expires_at: expiresAt,
+      calendar_id: "primary",
+    };
+
+    if (team_member_id) {
+      tokenRecord.team_member_id = team_member_id;
+    }
+
     // Upsert token record
     const { error: dbError } = await supabase
       .from("google_calendar_tokens")
-      .upsert({
-        user_id,
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token,
-        token_expires_at: expiresAt,
-        calendar_id: "primary",
-      }, { onConflict: "user_id" });
+      .upsert(tokenRecord, { onConflict: team_member_id ? "team_member_id" : "user_id" });
 
     if (dbError) {
       console.error("DB error:", dbError);
