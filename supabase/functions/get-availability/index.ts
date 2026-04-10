@@ -8,6 +8,57 @@ const corsHeaders = {
 
 const TIMEZONE = "America/Los_Angeles";
 
+// Map Windows / non-IANA timezone names to IANA identifiers
+const TIMEZONE_MAP: Record<string, string> = {
+  "Pacific Standard Time": "America/Los_Angeles",
+  "Pacific Daylight Time": "America/Los_Angeles",
+  "Mountain Standard Time": "America/Denver",
+  "Mountain Daylight Time": "America/Denver",
+  "Central Standard Time": "America/Chicago",
+  "Central Daylight Time": "America/Chicago",
+  "Eastern Standard Time": "America/New_York",
+  "Eastern Daylight Time": "America/New_York",
+  "US Eastern Standard Time": "America/Indianapolis",
+  "Atlantic Standard Time": "Atlantic/Bermuda",
+  "Hawaiian Standard Time": "Pacific/Honolulu",
+  "Alaskan Standard Time": "America/Anchorage",
+  "GMT Standard Time": "Europe/London",
+  "Greenwich Standard Time": "Atlantic/Reykjavik",
+  "W. Europe Standard Time": "Europe/Berlin",
+  "Central European Standard Time": "Europe/Warsaw",
+  "Romance Standard Time": "Europe/Paris",
+  "E. Europe Standard Time": "Europe/Chisinau",
+  "FLE Standard Time": "Europe/Kiev",
+  "GTB Standard Time": "Europe/Bucharest",
+  "Russian Standard Time": "Europe/Moscow",
+  "Israel Standard Time": "Asia/Jerusalem",
+  "South Africa Standard Time": "Africa/Johannesburg",
+  "India Standard Time": "Asia/Kolkata",
+  "China Standard Time": "Asia/Shanghai",
+  "Tokyo Standard Time": "Asia/Tokyo",
+  "Korea Standard Time": "Asia/Seoul",
+  "AUS Eastern Standard Time": "Australia/Sydney",
+  "New Zealand Standard Time": "Pacific/Auckland",
+  "Taipei Standard Time": "Asia/Taipei",
+  "Singapore Standard Time": "Asia/Singapore",
+  "Arabian Standard Time": "Asia/Dubai",
+  "SE Asia Standard Time": "Asia/Bangkok",
+};
+
+function normalizeTimezone(tzid: string): string {
+  // Already valid IANA? Try it.
+  if (tzid.includes("/")) return tzid;
+  // Look up in our map (case-insensitive)
+  const mapped = TIMEZONE_MAP[tzid] ||
+    Object.entries(TIMEZONE_MAP).find(
+      ([k]) => k.toLowerCase() === tzid.toLowerCase(),
+    )?.[1];
+  if (mapped) return mapped;
+  // Last resort: return original and let it fail gracefully
+  console.warn(`Unknown timezone: ${tzid}, falling back to ${TIMEZONE}`);
+  return TIMEZONE;
+}
+
 // Convert a local Seattle time on a given date to UTC
 function seattleToUTC(dateStr: string, hours: number, minutes: number): Date {
   const [y, m, d] = dateStr.split("-").map(Number);
