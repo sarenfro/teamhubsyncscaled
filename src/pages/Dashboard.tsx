@@ -217,33 +217,18 @@ const Dashboard = () => {
                   </span>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button
+                  <Button
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setPendingDeleteTeam({ id: t.team_id, name: t.team?.name || "" });
+                          setDeleteStep(1);
+                        }}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete "{t.team?.name}"?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This will permanently delete this team, all its members, bookings, and event types. This action cannot be undone.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => handleDeleteTeam(t.team_id)}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          Delete Team
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
                 </div>
               </div>
             ))}
