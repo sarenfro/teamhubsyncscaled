@@ -30,7 +30,7 @@ const CreateTeam = () => {
   const [memberNames, setMemberNames] = useState<string[]>(["", ""]);
   const [memberEmails, setMemberEmails] = useState<string[]>(["", ""]);
   const [memberIcalUrls, setMemberIcalUrls] = useState<string[]>(["", ""]);
-  const [memberHtmlLinks, setMemberHtmlLinks] = useState<string[]>(["", ""]);
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
@@ -56,7 +56,7 @@ const CreateTeam = () => {
     setMemberNames(resize);
     setMemberEmails(resize);
     setMemberIcalUrls(resize);
-    setMemberHtmlLinks(resize);
+    
   };
 
   const handleMemberFieldChange = (
@@ -89,7 +89,6 @@ const CreateTeam = () => {
         name: name.trim(),
         email: memberEmails[i]?.trim() || "",
         ical_url: memberIcalUrls[i]?.trim() || "",
-        html_link: memberHtmlLinks[i]?.trim() || "",
       }))
       .filter((m) => m.name);
     if (filledMembers.length === 0) return;
@@ -230,14 +229,6 @@ const CreateTeam = () => {
                       value={memberIcalUrls[i] || ""}
                       onChange={(e) => handleMemberFieldChange(setMemberIcalUrls, i, e.target.value)}
                       placeholder="https://calendar.google.com/calendar/ical/..."
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-muted-foreground">HTML Calendar Link</label>
-                    <Input
-                      value={memberHtmlLinks[i] || ""}
-                      onChange={(e) => handleMemberFieldChange(setMemberHtmlLinks, i, e.target.value)}
-                      placeholder="https://calendar.google.com/calendar/embed?src=..."
                     />
                   </div>
                 </div>
