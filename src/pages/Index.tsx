@@ -17,6 +17,7 @@ const Index = () => {
   const [bookerName, setBookerName] = useState("");
   const [bookerEmail, setBookerEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [cancellationToken, setCancellationToken] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchMembers = async () => {
