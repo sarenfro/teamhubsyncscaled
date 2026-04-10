@@ -152,6 +152,7 @@ export type Database = {
       }
       event_types: {
         Row: {
+          assignment_strategy: string
           buffer_minutes: number
           color: string
           created_at: string
@@ -170,6 +171,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          assignment_strategy?: string
           buffer_minutes?: number
           color?: string
           created_at?: string
@@ -188,6 +190,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          assignment_strategy?: string
           buffer_minutes?: number
           color?: string
           created_at?: string
@@ -214,6 +217,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      google_calendar_tokens: {
+        Row: {
+          access_token: string
+          calendar_id: string
+          created_at: string
+          id: string
+          refresh_token: string
+          token_expires_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          calendar_id?: string
+          created_at?: string
+          id?: string
+          refresh_token: string
+          token_expires_at: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          calendar_id?: string
+          created_at?: string
+          id?: string
+          refresh_token?: string
+          token_expires_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -247,6 +283,60 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      routing_forms: {
+        Row: {
+          created_at: string
+          event_type_id: string | null
+          id: string
+          is_active: boolean
+          owner_user_id: string | null
+          questions: Json
+          routing_rules: Json
+          team_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          event_type_id?: string | null
+          id?: string
+          is_active?: boolean
+          owner_user_id?: string | null
+          questions?: Json
+          routing_rules?: Json
+          team_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          event_type_id?: string | null
+          id?: string
+          is_active?: boolean
+          owner_user_id?: string | null
+          questions?: Json
+          routing_rules?: Json
+          team_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "routing_forms_event_type_id_fkey"
+            columns: ["event_type_id"]
+            isOneToOne: false
+            referencedRelation: "event_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "routing_forms_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       team_admins: {
         Row: {
