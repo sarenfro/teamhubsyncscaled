@@ -22,6 +22,7 @@ export type Database = {
           cancelled_at: string | null
           created_at: string | null
           duration_minutes: number | null
+          ics_uid: string | null
           id: string
           meeting_date: string
           meeting_time: string
@@ -37,6 +38,7 @@ export type Database = {
           cancelled_at?: string | null
           created_at?: string | null
           duration_minutes?: number | null
+          ics_uid?: string | null
           id?: string
           meeting_date: string
           meeting_time: string
@@ -52,6 +54,7 @@ export type Database = {
           cancelled_at?: string | null
           created_at?: string | null
           duration_minutes?: number | null
+          ics_uid?: string | null
           id?: string
           meeting_date?: string
           meeting_time?: string

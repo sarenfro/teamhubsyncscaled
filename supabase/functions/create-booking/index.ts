@@ -14,8 +14,9 @@ function generateICS(params: {
   bookerName: string;
   bookerEmail: string;
   organizerName: string;
+  uid: string;
 }): string {
-  const { title, dateStr, timeStr, durationMinutes, bookerName, bookerEmail, organizerName } =
+  const { title, dateStr, timeStr, durationMinutes, bookerName, bookerEmail, organizerName, uid } =
     params;
 
   const timeMatch = timeStr.match(/^(\d{1,2}):(\d{2})\s*(am|pm)$/i);
@@ -50,7 +51,7 @@ function generateICS(params: {
   const endUTC = new Date(startUTC.getTime() + durationMinutes * 60 * 1000);
   const fmtDt = (dt: Date) =>
     dt.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
-  const uid = `${Date.now()}-${Math.random().toString(36).slice(2)}@teambooking`;
+  // Use the shared UID passed in for cancellation support
 
   return [
     "BEGIN:VCALENDAR",
@@ -143,6 +144,8 @@ serve(async (req) => {
 
     // Single cancellation token shared across all bookings in this session
     const cancellationToken = crypto.randomUUID();
+    // Single ICS UID shared across all bookings so cancellation can reference it
+    const icsUid = `${Date.now()}-${Math.random().toString(36).slice(2)}@teambooking`;
 
     // Insert one booking row per selected member
     for (const memberId of memberIds) {
@@ -157,6 +160,7 @@ serve(async (req) => {
         duration_minutes,
         status: "confirmed",
         cancellation_token: cancellationToken,
+        ics_uid: icsUid,
       });
     }
 
@@ -184,6 +188,7 @@ serve(async (req) => {
       bookerName: booker_name,
       bookerEmail: booker_email,
       organizerName: memberLabel,
+      uid: icsUid,
     });
 
     const cancelUrl = app_url

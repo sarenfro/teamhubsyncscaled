@@ -1,0 +1,1 @@
+ALTER TABLE public.bookings ADD COLUMN ics_uid text;
