@@ -82,6 +82,22 @@ const Dashboard = () => {
     }
   };
 
+  const [pendingLeaveTeam, setPendingLeaveTeam] = useState<{ id: string; name: string } | null>(null);
+
+  const handleLeaveTeam = async (teamId: string) => {
+    const { error } = await supabase
+      .from("team_admins")
+      .delete()
+      .eq("team_id", teamId)
+      .eq("user_id", user!.id);
+    if (error) {
+      toast({ title: "Error", description: "Failed to leave team", variant: "destructive" });
+    } else {
+      toast({ title: "Left team" });
+      await reloadTeams();
+    }
+  };
+
   const handleClaim = async () => {
     if (!claimSlug.trim() || !claimPassword.trim()) return;
     setClaiming(true);
