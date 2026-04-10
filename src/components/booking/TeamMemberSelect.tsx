@@ -20,10 +20,6 @@ const avatarColors = ["bg-booking-avatar-1", "bg-booking-avatar-2", "bg-booking-
 const TeamMemberSelect = ({ members, selectedIds, onToggle, onSelectAll, onConfirm }: TeamMemberSelectProps) => {
   return (
     <div className="space-y-6">
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-foreground">Meet your MBAA EC</h2>
-        <p className="text-muted-foreground">Select one or more members to schedule a meeting with</p>
-      </div>
 
       {/* Book with entire team button */}
       <button
