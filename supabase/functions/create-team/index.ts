@@ -64,17 +64,19 @@ serve(async (req) => {
     }
 
     // Insert team members
-    type MemberInput = { name: string; email?: string; ical_url?: string; html_link?: string };
+    type MemberInput = { name: string; email?: string; ical_url?: string };
     const memberRows = (members as MemberInput[]).map((m, i) => ({
       team_id: team.id,
       name: m.name,
       email: m.email || null,
       ical_url: m.ical_url || null,
-      html_link: m.html_link || null,
       color_index: i % 4,
     }));
 
-    await supabase.from("team_members").insert(memberRows);
+    const { error: membersError } = await supabase.from("team_members").insert(memberRows);
+    if (membersError) {
+      console.error("Failed to insert members:", membersError);
+    }
 
     return new Response(JSON.stringify({ teamId: team.id, slug: team.slug }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
