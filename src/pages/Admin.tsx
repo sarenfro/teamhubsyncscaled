@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -24,23 +25,18 @@ const avatarColors = [
 
 const Admin = () => {
   const { slug } = useParams<{ slug: string }>();
+  const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const [teamName, setTeamName] = useState("");
+  const [teamId, setTeamId] = useState<string | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [icalInputs, setIcalInputs] = useState<Record<string, string>>({});
   const [savingIcal, setSavingIcal] = useState<Record<string, boolean>>({});
   const [copied, setCopied] = useState(false);
+  const [unauthorized, setUnauthorized] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem(`team_auth_${slug}`);
-    if (!token) { navigate(`/login/${slug}`); return; }
-    try {
-      const parsed = JSON.parse(token);
-      if (!parsed.authorized) { navigate(`/login/${slug}`); return; }
-    } catch {
-      navigate(`/login/${slug}`);
-      return;
-    }
+    if (authLoading || !user) return;
 
     const load = async () => {
       const { data: team } = await supabase
@@ -49,6 +45,21 @@ const Admin = () => {
         .eq("slug", slug!)
         .maybeSingle();
       if (!team) return;
+
+      // Check if user is admin of this team
+      const { data: adminCheck } = await supabase
+        .from("team_admins")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("team_id", team.id)
+        .maybeSingle();
+
+      if (!adminCheck) {
+        setUnauthorized(true);
+        return;
+      }
+
+      setTeamId(team.id);
       setTeamName(team.name);
 
       const { data: mData } = await supabase
@@ -64,7 +75,7 @@ const Admin = () => {
       }
     };
     load();
-  }, [slug, navigate]);
+  }, [slug, user, authLoading]);
 
   const bookingUrl = `${window.location.origin}/book/${slug}`;
 
@@ -98,10 +109,21 @@ const Admin = () => {
     );
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem(`team_auth_${slug}`);
-    navigate(`/login/${slug}`);
-  };
+  if (authLoading) {
+    return <div className="min-h-screen bg-background flex items-center justify-center"><p className="text-muted-foreground">Loading...</p></div>;
+  }
+
+  if (unauthorized) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <div className="text-center space-y-4">
+          <h1 className="text-2xl font-bold text-foreground">Access Denied</h1>
+          <p className="text-muted-foreground">You don't have permission to manage this team.</p>
+          <Button variant="booking" onClick={() => navigate("/dashboard")}>Go to Dashboard</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -112,9 +134,14 @@ const Admin = () => {
             <h1 className="text-2xl font-bold text-foreground">{teamName}</h1>
             <p className="text-sm text-muted-foreground">Admin Dashboard</p>
           </div>
-          <Button variant="outline" size="sm" onClick={handleLogout}>
-            Log Out
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")}>
+              My Teams
+            </Button>
+            <Button variant="outline" size="sm" onClick={signOut}>
+              Sign Out
+            </Button>
+          </div>
         </div>
 
         {/* Booking link */}
@@ -157,10 +184,7 @@ const Admin = () => {
                 <div
                   className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold text-primary-foreground ${avatarColors[member.color_index % avatarColors.length]}`}
                 >
-                  {member.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")}
+                  {member.name.split(" ").map((n) => n[0]).join("")}
                 </div>
                 <div className="flex-1 min-w-0 space-y-2">
                   <div className="flex items-center gap-3">
