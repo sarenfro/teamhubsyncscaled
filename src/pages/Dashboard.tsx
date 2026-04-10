@@ -80,6 +80,7 @@ const Dashboard = () => {
     }
   };
 
+  const handleClaim = async () => {
     if (!claimSlug.trim() || !claimPassword.trim()) return;
     setClaiming(true);
     try {
