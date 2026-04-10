@@ -14,6 +14,7 @@ const TIMEZONE_MAP: Record<string, string> = {
   "Pacific Daylight Time": "America/Los_Angeles",
   "Mountain Standard Time": "America/Denver",
   "Mountain Daylight Time": "America/Denver",
+  "US Mountain Standard Time": "America/Phoenix",
   "Central Standard Time": "America/Chicago",
   "Central Daylight Time": "America/Chicago",
   "Eastern Standard Time": "America/New_York",
@@ -22,6 +23,9 @@ const TIMEZONE_MAP: Record<string, string> = {
   "Atlantic Standard Time": "Atlantic/Bermuda",
   "Hawaiian Standard Time": "Pacific/Honolulu",
   "Alaskan Standard Time": "America/Anchorage",
+  "SA Pacific Standard Time": "America/Bogota",
+  "SA Western Standard Time": "America/La_Paz",
+  "SA Eastern Standard Time": "America/Cayenne",
   "GMT Standard Time": "Europe/London",
   "Greenwich Standard Time": "Atlantic/Reykjavik",
   "W. Europe Standard Time": "Europe/Berlin",
@@ -43,19 +47,24 @@ const TIMEZONE_MAP: Record<string, string> = {
   "Singapore Standard Time": "Asia/Singapore",
   "Arabian Standard Time": "Asia/Dubai",
   "SE Asia Standard Time": "Asia/Bangkok",
+  "Customized Time Zone": "America/Los_Angeles",
 };
 
 function normalizeTimezone(tzid: string): string {
-  // Already valid IANA? Try it.
-  if (tzid.includes("/")) return tzid;
+  // Strip surrounding quotes
+  const cleaned = tzid.replace(/^["']|["']$/g, "").trim();
+  // Common valid names
+  if (cleaned === "UTC" || cleaned === "GMT") return "Etc/UTC";
+  // Already valid IANA?
+  if (cleaned.includes("/")) return cleaned;
   // Look up in our map (case-insensitive)
-  const mapped = TIMEZONE_MAP[tzid] ||
+  const mapped = TIMEZONE_MAP[cleaned] ||
     Object.entries(TIMEZONE_MAP).find(
-      ([k]) => k.toLowerCase() === tzid.toLowerCase(),
+      ([k]) => k.toLowerCase() === cleaned.toLowerCase(),
     )?.[1];
   if (mapped) return mapped;
-  // Last resort: return original and let it fail gracefully
-  console.warn(`Unknown timezone: ${tzid}, falling back to ${TIMEZONE}`);
+  // Last resort
+  console.warn(`Unknown timezone: ${cleaned}, falling back to ${TIMEZONE}`);
   return TIMEZONE;
 }
 
@@ -475,9 +484,16 @@ serve(async (req) => {
             headers: { "User-Agent": "TeamBooking/1.0" },
             signal: AbortSignal.timeout(8000),
           });
-          if (!response.ok) return;
+          if (!response.ok) {
+            console.error(`iCal fetch returned ${response.status} for member ${member.name}`);
+            return;
+          }
           const icalText = await response.text();
           const events = parseIcalForDate(icalText, dateStr);
+          if (events.length === 0) {
+            const eventCount = (icalText.match(/BEGIN:VEVENT/g) || []).length;
+            console.warn(`No busy events for ${member.name} on ${dateStr} (feed has ${eventCount} events total)`);
+          }
           busyPeriods.push(...events.map((e) => ({ start: e.start, end: e.end })));
         } catch (e) {
           console.error(`iCal fetch failed for member ${member.name}:`, e);
