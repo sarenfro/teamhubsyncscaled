@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { format } from "date-fns";
-import { CheckCircle2, Calendar, Clock, User, Video, Download, ExternalLink } from "lucide-react";
+import { CheckCircle2, Calendar, Clock, User, Download, ExternalLink, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import type { TeamMember } from "./TeamMemberSelect";
@@ -11,6 +12,7 @@ interface BookingConfirmationProps {
   time: string;
   bookerName: string;
   bookerEmail: string;
+  cancellationToken?: string | null;
   onReset: () => void;
 }
 
@@ -21,7 +23,7 @@ function formatMemberNames(members: TeamMember[]): string {
   return firsts.slice(0, -1).join(", ") + " & " + firsts[firsts.length - 1];
 }
 
-const BookingConfirmation = ({ members, date, time, bookerName, bookerEmail, onReset }: BookingConfirmationProps) => {
+const BookingConfirmation = ({ members, date, time, bookerName, bookerEmail, cancellationToken, onReset }: BookingConfirmationProps) => {
   const [isDownloading, setIsDownloading] = useState(false);
 
   const meetingDate = format(date, "yyyy-MM-dd");
@@ -154,6 +156,24 @@ const BookingConfirmation = ({ members, date, time, bookerName, bookerEmail, onR
       <Button variant="booking-outline" onClick={onReset}>
         Schedule another meeting
       </Button>
+
+      <div className="space-y-2 pt-2">
+        {cancellationToken && (
+          <Link
+            to={`/cancel?token=${cancellationToken}`}
+            className="inline-flex items-center gap-1.5 text-sm text-destructive hover:underline"
+          >
+            <XCircle className="h-3.5 w-3.5" />
+            Cancel this appointment
+          </Link>
+        )}
+        <p className="text-xs text-muted-foreground">
+          Need to manage your bookings?{" "}
+          <Link to="/manage" className="text-booking-hero hover:underline">
+            Look up by email
+          </Link>
+        </p>
+      </div>
     </div>
   );
 };
