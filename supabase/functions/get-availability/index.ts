@@ -489,9 +489,11 @@ serve(async (req) => {
             return;
           }
           const icalText = await response.text();
-          console.log(`iCal for ${member.name}: ${icalText.length} chars, VEVENT count: ${(icalText.match(/BEGIN:VEVENT/g) || []).length}`);
           const events = parseIcalForDate(icalText, dateStr);
-          console.log(`Parsed ${events.length} busy events for ${member.name} on ${dateStr}:`, events.map(e => `${e.start.toISOString()}-${e.end.toISOString()}`));
+          if (events.length === 0) {
+            const eventCount = (icalText.match(/BEGIN:VEVENT/g) || []).length;
+            console.warn(`No busy events for ${member.name} on ${dateStr} (feed has ${eventCount} events total)`);
+          }
           busyPeriods.push(...events.map((e) => ({ start: e.start, end: e.end })));
         } catch (e) {
           console.error(`iCal fetch failed for member ${member.name}:`, e);
