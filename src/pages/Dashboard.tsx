@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Users, LogOut, Key, Calendar, Clock, Link2, GitFork, Trash2 } from "lucide-react";
+import { Plus, Users, LogOut, Key, Calendar, Clock, Link2, GitFork, Trash2, DoorOpen } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -78,6 +78,22 @@ const Dashboard = () => {
       toast({ title: "Error", description: "Failed to delete team", variant: "destructive" });
     } else {
       toast({ title: "Team deleted" });
+      await reloadTeams();
+    }
+  };
+
+  const [pendingLeaveTeam, setPendingLeaveTeam] = useState<{ id: string; name: string } | null>(null);
+
+  const handleLeaveTeam = async (teamId: string) => {
+    const { error } = await supabase
+      .from("team_admins")
+      .delete()
+      .eq("team_id", teamId)
+      .eq("user_id", user!.id);
+    if (error) {
+      toast({ title: "Error", description: "Failed to leave team", variant: "destructive" });
+    } else {
+      toast({ title: "Left team" });
       await reloadTeams();
     }
   };
@@ -215,18 +231,32 @@ const Dashboard = () => {
                   <span className="text-xs px-2.5 py-1 rounded-full bg-booking-hero-light text-booking-hero font-medium capitalize">
                     {t.role}
                   </span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setPendingDeleteTeam({ id: t.team_id, name: t.team?.name || "" });
-                      setDeleteStep(1);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  {t.role === "owner" ? (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setPendingDeleteTeam({ id: t.team_id, name: t.team?.name || "" });
+                        setDeleteStep(1);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setPendingLeaveTeam({ id: t.team_id, name: t.team?.name || "" });
+                      }}
+                    >
+                      <DoorOpen className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               </div>
             ))}
@@ -325,6 +355,32 @@ const Dashboard = () => {
                 </AlertDialogFooter>
               </>
             )}
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Leave team confirmation */}
+        <AlertDialog
+          open={pendingLeaveTeam !== null}
+          onOpenChange={(open) => { if (!open) setPendingLeaveTeam(null); }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Leave "{pendingLeaveTeam?.name}"?</AlertDialogTitle>
+              <AlertDialogDescription>
+                You will no longer have access to manage this team. You can rejoin later if the team owner adds you back.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (pendingLeaveTeam) handleLeaveTeam(pendingLeaveTeam.id);
+                  setPendingLeaveTeam(null);
+                }}
+              >
+                Leave Team
+              </AlertDialogAction>
+            </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
       </div>
