@@ -9,6 +9,7 @@ import { Copy, Check, Users, Calendar } from "lucide-react";
 interface Member {
   id: string;
   name: string;
+  email: string | null;
   ical_url: string | null;
   is_active: boolean;
   color_index: number;
@@ -52,7 +53,7 @@ const Admin = () => {
 
       const { data: mData } = await supabase
         .from("team_members")
-        .select("id, name, ical_url, is_active, color_index")
+        .select("id, name, email, ical_url, is_active, color_index")
         .eq("team_id", team.id)
         .order("created_at");
       if (mData) {

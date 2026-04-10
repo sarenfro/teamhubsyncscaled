@@ -75,6 +75,7 @@ export type Database = {
         Row: {
           color_index: number | null
           created_at: string | null
+          email: string | null
           ical_url: string | null
           id: string
           is_active: boolean | null
@@ -84,6 +85,7 @@ export type Database = {
         Insert: {
           color_index?: number | null
           created_at?: string | null
+          email?: string | null
           ical_url?: string | null
           id?: string
           is_active?: boolean | null
@@ -93,6 +95,7 @@ export type Database = {
         Update: {
           color_index?: number | null
           created_at?: string | null
+          email?: string | null
           ical_url?: string | null
           id?: string
           is_active?: boolean | null
