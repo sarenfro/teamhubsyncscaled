@@ -93,12 +93,27 @@ const Dashboard = () => {
       <div className="mx-auto max-w-3xl px-4 py-8 space-y-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">My Teams</h1>
+            <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
             <p className="text-sm text-muted-foreground">{user?.email}</p>
           </div>
           <Button variant="outline" size="sm" onClick={signOut}>
             <LogOut className="h-4 w-4 mr-1" /> Sign Out
           </Button>
+        </div>
+
+        {/* Personal event types */}
+        <div className="rounded-xl border border-border p-6 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-foreground flex items-center gap-2">
+              <Calendar className="h-4 w-4" /> My Event Types
+            </h2>
+            <Button asChild variant="booking" size="sm">
+              <Link to="/event-types">Manage</Link>
+            </Button>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Create and manage your personal meeting types.
+          </p>
         </div>
 
         {loadingTeams ? (
