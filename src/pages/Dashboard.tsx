@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Users, LogOut, Key } from "lucide-react";
+import { Plus, Users, LogOut, Key, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface TeamWithRole {
@@ -28,7 +28,19 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (!user) return;
-    const loadTeams = async () => {
+    const loadData = async () => {
+      // Check if profile has slug set (onboarding complete)
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("slug")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!profile?.slug) {
+        navigate("/onboarding");
+        return;
+      }
+
       const { data } = await supabase
         .from("team_admins")
         .select("team_id, role, team:team_id(id, name, slug)")
@@ -36,8 +48,8 @@ const Dashboard = () => {
       if (data) setTeams(data as unknown as TeamWithRole[]);
       setLoadingTeams(false);
     };
-    loadTeams();
-  }, [user]);
+    loadData();
+  }, [user, navigate]);
 
   const handleClaim = async () => {
     if (!claimSlug.trim() || !claimPassword.trim()) return;
