@@ -14,7 +14,125 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bookings: {
+        Row: {
+          booker_email: string
+          booker_name: string
+          created_at: string | null
+          duration_minutes: number | null
+          id: string
+          meeting_date: string
+          meeting_time: string
+          notes: string | null
+          status: string | null
+          team_id: string | null
+          team_member_id: string | null
+        }
+        Insert: {
+          booker_email: string
+          booker_name: string
+          created_at?: string | null
+          duration_minutes?: number | null
+          id?: string
+          meeting_date: string
+          meeting_time: string
+          notes?: string | null
+          status?: string | null
+          team_id?: string | null
+          team_member_id?: string | null
+        }
+        Update: {
+          booker_email?: string
+          booker_name?: string
+          created_at?: string | null
+          duration_minutes?: number | null
+          id?: string
+          meeting_date?: string
+          meeting_time?: string
+          notes?: string | null
+          status?: string | null
+          team_id?: string | null
+          team_member_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_members: {
+        Row: {
+          color_index: number | null
+          created_at: string | null
+          ical_url: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          team_id: string | null
+        }
+        Insert: {
+          color_index?: number | null
+          created_at?: string | null
+          ical_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          team_id?: string | null
+        }
+        Update: {
+          color_index?: number | null
+          created_at?: string | null
+          ical_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          team_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teams: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          password_hash: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          password_hash: string
+          slug: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          password_hash?: string
+          slug?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
