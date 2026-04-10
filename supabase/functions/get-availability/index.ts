@@ -112,7 +112,8 @@ function parseDtProp(propLine: string): { date: Date; isAllDay: boolean } | null
 
   // Extract TZID from original (non-uppercased) propLine
   const tzidMatch = propLine.match(/TZID=([^;:]+)/i);
-  const tzid = tzidMatch ? tzidMatch[1] : TIMEZONE;
+  const rawTzid = tzidMatch ? tzidMatch[1] : TIMEZONE;
+  const tzid = normalizeTimezone(rawTzid);
 
   // Convert from tzid to UTC by round-trip
   for (const offsetHours of [7, 8, 0, 5, 6, 9, 10, 1, -1, 2, 3, 4, 11, 12, -5, -6, -7, -8]) {
