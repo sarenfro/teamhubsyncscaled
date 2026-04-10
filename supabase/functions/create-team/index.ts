@@ -28,7 +28,7 @@ serve(async (req) => {
     );
 
     // Hash the password
-    const passwordHash = await bcrypt.hash(password);
+    const passwordHash = await hash(password);
 
     // Insert team
     const { data: team, error: teamError } = await supabase

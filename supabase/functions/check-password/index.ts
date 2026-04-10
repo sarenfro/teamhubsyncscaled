@@ -38,7 +38,7 @@ serve(async (req) => {
       });
     }
 
-    const match = await bcrypt.compare(password, team.password_hash);
+    const match = await compare(password, team.password_hash);
 
     if (match) {
       return new Response(
