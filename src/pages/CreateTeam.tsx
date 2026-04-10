@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ChevronLeft } from "lucide-react";
 
-type Step = 1 | 2 | 3;
+type Step = 1 | 2;
 
 const generateSlug = (name: string) =>
   name
@@ -15,6 +16,7 @@ const generateSlug = (name: string) =>
 
 const CreateTeam = () => {
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
   const [step, setStep] = useState<Step>(1);
 
   // Step 1
@@ -29,12 +31,8 @@ const CreateTeam = () => {
   const [memberEmails, setMemberEmails] = useState<string[]>(["", ""]);
   const [memberIcalUrls, setMemberIcalUrls] = useState<string[]>(["", ""]);
   const [memberHtmlLinks, setMemberHtmlLinks] = useState<string[]>(["", ""]);
-
-  // Step 3
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordError, setPasswordError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const handleNameChange = (value: string) => {
     setTeamName(value);
@@ -85,15 +83,7 @@ const CreateTeam = () => {
     setStep(2);
   };
 
-  const handleStep3Submit = async () => {
-    if (password !== confirmPassword) {
-      setPasswordError("Passwords do not match.");
-      return;
-    }
-    if (password.length < 6) {
-      setPasswordError("Password must be at least 6 characters.");
-      return;
-    }
+  const handleSubmit = async () => {
     const filledMembers = memberNames
       .map((name, i) => ({
         name: name.trim(),
@@ -105,7 +95,9 @@ const CreateTeam = () => {
     if (filledMembers.length === 0) return;
 
     setIsSubmitting(true);
+    setSubmitError("");
     try {
+      const session = await supabase.auth.getSession();
       const res = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-team`,
         {
@@ -113,26 +105,25 @@ const CreateTeam = () => {
           headers: {
             "Content-Type": "application/json",
             apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            Authorization: `Bearer ${session.data.session?.access_token}`,
           },
-          body: JSON.stringify({ name: teamName.trim(), slug, password, members: filledMembers }),
+          body: JSON.stringify({ name: teamName.trim(), slug, members: filledMembers }),
         },
       );
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Failed to create team");
-
-      localStorage.setItem(
-        `team_auth_${slug}`,
-        JSON.stringify({ teamId: json.teamId, slug, authorized: true }),
-      );
       navigate(`/admin/${slug}`);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setPasswordError("Something went wrong. Please try again.");
+      setSubmitError(err.message || "Something went wrong. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (authLoading) {
+    return <div className="min-h-screen bg-background flex items-center justify-center"><p className="text-muted-foreground">Loading...</p></div>;
+  }
 
   return (
     <div className="min-h-screen bg-background flex items-start justify-center p-6 pt-16">
@@ -147,12 +138,9 @@ const CreateTeam = () => {
             <span className={step >= 2 ? "text-booking-hero font-semibold" : "text-muted-foreground"}>
               2. Members
             </span>
-            <span className="text-muted-foreground">→</span>
-            <span className={step >= 3 ? "text-booking-hero font-semibold" : "text-muted-foreground"}>
-              3. Password
-            </span>
           </div>
           <h1 className="text-2xl font-bold text-foreground">Create Your Team Page</h1>
+          <p className="text-sm text-muted-foreground">Signed in as {user?.email}</p>
         </div>
 
         {/* Step 1 */}
@@ -218,19 +206,17 @@ const CreateTeam = () => {
             <div className="space-y-6">
               {memberNames.map((name, i) => (
                 <div key={i} className="space-y-3 p-4 rounded-lg border border-border">
-                  <p className="text-sm font-semibold text-foreground">
-                    {i === 0 ? "Member 1 (Team Admin)" : `Member ${i + 1}`}
-                  </p>
+                  <p className="text-sm font-semibold text-foreground">Member {i + 1}</p>
                   <div className="space-y-1">
                     <label className="text-xs font-medium text-muted-foreground">Name *</label>
                     <Input
                       value={name}
                       onChange={(e) => handleMemberFieldChange(setMemberNames, i, e.target.value)}
-                      placeholder={i === 0 ? "Your full name" : `Team member ${i + 1}`}
+                      placeholder={`Team member ${i + 1}`}
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-medium text-muted-foreground">Email *</label>
+                    <label className="text-xs font-medium text-muted-foreground">Email</label>
                     <Input
                       type="email"
                       value={memberEmails[i] || ""}
@@ -239,15 +225,12 @@ const CreateTeam = () => {
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-medium text-muted-foreground">iCal URL *</label>
+                    <label className="text-xs font-medium text-muted-foreground">iCal URL</label>
                     <Input
                       value={memberIcalUrls[i] || ""}
                       onChange={(e) => handleMemberFieldChange(setMemberIcalUrls, i, e.target.value)}
                       placeholder="https://calendar.google.com/calendar/ical/..."
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Google Calendar → Settings → Share → Secret address in iCal format
-                    </p>
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-medium text-muted-foreground">HTML Calendar Link</label>
@@ -256,69 +239,17 @@ const CreateTeam = () => {
                       onChange={(e) => handleMemberFieldChange(setMemberHtmlLinks, i, e.target.value)}
                       placeholder="https://calendar.google.com/calendar/embed?src=..."
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Google Calendar → Settings → Share → Public URL to this calendar
-                    </p>
                   </div>
                 </div>
               ))}
             </div>
+            {submitError && <p className="text-sm text-destructive">{submitError}</p>}
             <Button
               variant="booking"
               size="lg"
               className="w-full"
-              onClick={() => setStep(3)}
-              disabled={memberNames.every((n) => !n.trim())}
-            >
-              Continue
-            </Button>
-          </div>
-        )}
-
-        {/* Step 3 */}
-        {step === 3 && (
-          <div className="space-y-6">
-            <button
-              onClick={() => setStep(2)}
-              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ChevronLeft className="h-4 w-4" /> Back
-            </button>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Team Password *</label>
-              <Input
-                type="password"
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  setPasswordError("");
-                }}
-                placeholder="Set a shared team password"
-              />
-              <p className="text-xs text-muted-foreground">
-                Share this password with your teammates so they can access the admin dashboard.
-              </p>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Confirm Password *</label>
-              <Input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => {
-                  setConfirmPassword(e.target.value);
-                  setPasswordError("");
-                }}
-                placeholder="Confirm password"
-                onKeyDown={(e) => e.key === "Enter" && handleStep3Submit()}
-              />
-              {passwordError && <p className="text-xs text-destructive">{passwordError}</p>}
-            </div>
-            <Button
-              variant="booking"
-              size="lg"
-              className="w-full"
-              onClick={handleStep3Submit}
-              disabled={isSubmitting || !password || !confirmPassword}
+              onClick={handleSubmit}
+              disabled={isSubmitting || memberNames.every((n) => !n.trim())}
             >
               {isSubmitting ? "Creating..." : "Create Team Page"}
             </Button>

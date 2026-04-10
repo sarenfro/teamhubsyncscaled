@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Calendar, Clock, User } from "lucide-react";
 import { format, parseISO } from "date-fns";
@@ -19,20 +20,13 @@ interface Booking {
 
 const AdminBookings = () => {
   const { slug } = useParams<{ slug: string }>();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem(`team_auth_${slug}`);
-    if (!token) { navigate(`/login/${slug}`); return; }
-    try {
-      const parsed = JSON.parse(token);
-      if (!parsed.authorized) { navigate(`/login/${slug}`); return; }
-    } catch {
-      navigate(`/login/${slug}`);
-      return;
-    }
+    if (authLoading || !user) return;
 
     const load = async () => {
       const { data: team } = await supabase
@@ -57,7 +51,7 @@ const AdminBookings = () => {
       setLoading(false);
     };
     load();
-  }, [slug, navigate]);
+  }, [slug, user, authLoading]);
 
   return (
     <div className="min-h-screen bg-background">
