@@ -26,6 +26,9 @@ const CreateTeam = () => {
   // Step 2
   const [memberCount, setMemberCount] = useState(2);
   const [memberNames, setMemberNames] = useState<string[]>(["", ""]);
+  const [memberEmails, setMemberEmails] = useState<string[]>(["", ""]);
+  const [memberIcalUrls, setMemberIcalUrls] = useState<string[]>(["", ""]);
+  const [memberHtmlLinks, setMemberHtmlLinks] = useState<string[]>(["", ""]);
 
   // Step 3
   const [password, setPassword] = useState("");
@@ -47,15 +50,23 @@ const CreateTeam = () => {
   const handleMemberCountChange = (count: number) => {
     const n = Math.max(1, Math.min(20, count));
     setMemberCount(n);
-    setMemberNames((prev) => {
-      const next = [...prev];
+    const resize = (arr: string[]) => {
+      const next = [...arr];
       while (next.length < n) next.push("");
       return next.slice(0, n);
-    });
+    };
+    setMemberNames(resize);
+    setMemberEmails(resize);
+    setMemberIcalUrls(resize);
+    setMemberHtmlLinks(resize);
   };
 
-  const handleMemberNameChange = (index: number, value: string) => {
-    setMemberNames((prev) => {
+  const handleMemberFieldChange = (
+    setter: React.Dispatch<React.SetStateAction<string[]>>,
+    index: number,
+    value: string,
+  ) => {
+    setter((prev) => {
       const next = [...prev];
       next[index] = value;
       return next;
@@ -83,7 +94,14 @@ const CreateTeam = () => {
       setPasswordError("Password must be at least 6 characters.");
       return;
     }
-    const filledMembers = memberNames.map((n) => n.trim()).filter(Boolean);
+    const filledMembers = memberNames
+      .map((name, i) => ({
+        name: name.trim(),
+        email: memberEmails[i]?.trim() || "",
+        ical_url: memberIcalUrls[i]?.trim() || "",
+        html_link: memberHtmlLinks[i]?.trim() || "",
+      }))
+      .filter((m) => m.name);
     if (filledMembers.length === 0) return;
 
     setIsSubmitting(true);
@@ -197,17 +215,51 @@ const CreateTeam = () => {
                 className="w-28"
               />
             </div>
-            <div className="space-y-3">
+            <div className="space-y-6">
               {memberNames.map((name, i) => (
-                <div key={i} className="space-y-1">
-                  <label className="text-sm font-medium text-foreground">
-                    {i === 0 ? "Your Name (Team Admin)" : `Member ${i + 1}`} *
-                  </label>
-                  <Input
-                    value={name}
-                    onChange={(e) => handleMemberNameChange(i, e.target.value)}
-                    placeholder={i === 0 ? "Your full name" : `Team member ${i + 1}`}
-                  />
+                <div key={i} className="space-y-3 p-4 rounded-lg border border-border">
+                  <p className="text-sm font-semibold text-foreground">
+                    {i === 0 ? "Member 1 (Team Admin)" : `Member ${i + 1}`}
+                  </p>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground">Name *</label>
+                    <Input
+                      value={name}
+                      onChange={(e) => handleMemberFieldChange(setMemberNames, i, e.target.value)}
+                      placeholder={i === 0 ? "Your full name" : `Team member ${i + 1}`}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground">Email *</label>
+                    <Input
+                      type="email"
+                      value={memberEmails[i] || ""}
+                      onChange={(e) => handleMemberFieldChange(setMemberEmails, i, e.target.value)}
+                      placeholder="email@example.com"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground">iCal URL *</label>
+                    <Input
+                      value={memberIcalUrls[i] || ""}
+                      onChange={(e) => handleMemberFieldChange(setMemberIcalUrls, i, e.target.value)}
+                      placeholder="https://calendar.google.com/calendar/ical/..."
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Google Calendar → Settings → Share → Secret address in iCal format
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground">HTML Calendar Link</label>
+                    <Input
+                      value={memberHtmlLinks[i] || ""}
+                      onChange={(e) => handleMemberFieldChange(setMemberHtmlLinks, i, e.target.value)}
+                      placeholder="https://calendar.google.com/calendar/embed?src=..."
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Google Calendar → Settings → Share → Public URL to this calendar
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>

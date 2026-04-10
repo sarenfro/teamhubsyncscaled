@@ -45,9 +45,13 @@ serve(async (req) => {
     }
 
     // Insert team members
-    const memberRows = (members as string[]).map((memberName: string, i: number) => ({
+    type MemberInput = { name: string; email?: string; ical_url?: string; html_link?: string };
+    const memberRows = (members as MemberInput[]).map((m, i) => ({
       team_id: team.id,
-      name: memberName,
+      name: m.name,
+      email: m.email || null,
+      ical_url: m.ical_url || null,
+      html_link: m.html_link || null,
       color_index: i % 4,
     }));
 
