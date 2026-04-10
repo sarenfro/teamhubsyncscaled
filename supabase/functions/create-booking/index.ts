@@ -51,7 +51,7 @@ function generateICS(params: {
   const endUTC = new Date(startUTC.getTime() + durationMinutes * 60 * 1000);
   const fmtDt = (dt: Date) =>
     dt.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
-  const uid = `${Date.now()}-${Math.random().toString(36).slice(2)}@teambooking`;
+  // Use the shared UID passed in for cancellation support
 
   return [
     "BEGIN:VCALENDAR",
