@@ -324,7 +324,6 @@ function parseIcalForDate(icalText: string, targetDateStr: string): CalEvent[] {
         const startParts = getSeattleParts(dtstart);
         const isOnTarget =
           startParts.year === ty && startParts.month === tm && startParts.day === td;
-        console.log(`  VEVENT: start=${dtstart.toISOString()} (${startParts.year}-${startParts.month}-${startParts.day}) target=${ty}-${tm}-${td} onTarget=${isOnTarget} allDay=${isAllDay} rrule=${rrule ? 'yes' : 'no'}`);
 
         let shouldInclude = false;
 
