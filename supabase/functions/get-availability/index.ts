@@ -14,6 +14,7 @@ const TIMEZONE_MAP: Record<string, string> = {
   "Pacific Daylight Time": "America/Los_Angeles",
   "Mountain Standard Time": "America/Denver",
   "Mountain Daylight Time": "America/Denver",
+  "US Mountain Standard Time": "America/Phoenix",
   "Central Standard Time": "America/Chicago",
   "Central Daylight Time": "America/Chicago",
   "Eastern Standard Time": "America/New_York",
@@ -22,6 +23,9 @@ const TIMEZONE_MAP: Record<string, string> = {
   "Atlantic Standard Time": "Atlantic/Bermuda",
   "Hawaiian Standard Time": "Pacific/Honolulu",
   "Alaskan Standard Time": "America/Anchorage",
+  "SA Pacific Standard Time": "America/Bogota",
+  "SA Western Standard Time": "America/La_Paz",
+  "SA Eastern Standard Time": "America/Cayenne",
   "GMT Standard Time": "Europe/London",
   "Greenwich Standard Time": "Atlantic/Reykjavik",
   "W. Europe Standard Time": "Europe/Berlin",
@@ -43,6 +47,7 @@ const TIMEZONE_MAP: Record<string, string> = {
   "Singapore Standard Time": "Asia/Singapore",
   "Arabian Standard Time": "Asia/Dubai",
   "SE Asia Standard Time": "Asia/Bangkok",
+  "Customized Time Zone": "America/Los_Angeles",
 };
 
 function normalizeTimezone(tzid: string): string {
