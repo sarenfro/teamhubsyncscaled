@@ -22,6 +22,7 @@ export type Database = {
           cancelled_at: string | null
           created_at: string | null
           duration_minutes: number | null
+          event_type_id: string | null
           ics_uid: string | null
           id: string
           meeting_date: string
@@ -38,6 +39,7 @@ export type Database = {
           cancelled_at?: string | null
           created_at?: string | null
           duration_minutes?: number | null
+          event_type_id?: string | null
           ics_uid?: string | null
           id?: string
           meeting_date: string
@@ -54,6 +56,7 @@ export type Database = {
           cancelled_at?: string | null
           created_at?: string | null
           duration_minutes?: number | null
+          event_type_id?: string | null
           ics_uid?: string | null
           id?: string
           meeting_date?: string
@@ -64,6 +67,13 @@ export type Database = {
           team_member_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "bookings_event_type_id_fkey"
+            columns: ["event_type_id"]
+            isOneToOne: false
+            referencedRelation: "event_types"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "bookings_team_id_fkey"
             columns: ["team_id"]
@@ -80,12 +90,70 @@ export type Database = {
           },
         ]
       }
+      event_types: {
+        Row: {
+          color: string
+          created_at: string
+          description: string | null
+          duration_minutes: number
+          id: string
+          is_active: boolean
+          location_type: string | null
+          location_value: string | null
+          owner_team_id: string | null
+          owner_user_id: string | null
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean
+          location_type?: string | null
+          location_value?: string | null
+          owner_team_id?: string | null
+          owner_user_id?: string | null
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean
+          location_type?: string | null
+          location_value?: string | null
+          owner_team_id?: string | null
+          owner_user_id?: string | null
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_types_owner_team_id_fkey"
+            columns: ["owner_team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
           created_at: string
           display_name: string | null
           id: string
+          slug: string | null
+          timezone: string
           updated_at: string
           user_id: string
         }
@@ -94,6 +162,8 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          slug?: string | null
+          timezone?: string
           updated_at?: string
           user_id: string
         }
@@ -102,6 +172,8 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          slug?: string | null
+          timezone?: string
           updated_at?: string
           user_id?: string
         }
