@@ -18,6 +18,8 @@ export type Database = {
         Row: {
           booker_email: string
           booker_name: string
+          cancellation_token: string | null
+          cancelled_at: string | null
           created_at: string | null
           duration_minutes: number | null
           id: string
@@ -31,6 +33,8 @@ export type Database = {
         Insert: {
           booker_email: string
           booker_name: string
+          cancellation_token?: string | null
+          cancelled_at?: string | null
           created_at?: string | null
           duration_minutes?: number | null
           id?: string
@@ -44,6 +48,8 @@ export type Database = {
         Update: {
           booker_email?: string
           booker_name?: string
+          cancellation_token?: string | null
+          cancelled_at?: string | null
           created_at?: string | null
           duration_minutes?: number | null
           id?: string
