@@ -14,38 +14,17 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const isUwEmail = (emailAddr: string) => emailAddr.trim().toLowerCase().endsWith("@uw.edu");
-
-  const showUwError = () => {
-    toast({
-      title: "UW Email Required",
-      description: "Only @uw.edu email addresses are allowed to create accounts at this time.",
-      className: "bg-[hsl(214,100%,50%)] text-white border-none",
-    });
-  };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         if (session?.user) {
-          const userEmail = session.user.email || "";
-          if (!userEmail.toLowerCase().endsWith("@uw.edu")) {
-            await supabase.auth.signOut();
-            showUwError();
-            return;
-          }
           navigate("/dashboard");
         }
       }
     );
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
-        const userEmail = session.user.email || "";
-        if (!userEmail.toLowerCase().endsWith("@uw.edu")) {
-          await supabase.auth.signOut();
-          showUwError();
-          return;
-        }
         navigate("/dashboard");
       }
     });
@@ -54,10 +33,6 @@ const Auth = () => {
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isLogin && !isUwEmail(email)) {
-      showUwError();
-      return;
-    }
     setLoading(true);
     try {
       if (isLogin) {
@@ -83,7 +58,6 @@ const Auth = () => {
   const handleGoogleSignIn = async () => {
     const result = await lovable.auth.signInWithOAuth("google", {
       redirect_uri: window.location.origin,
-      extraParams: { hd: "uw.edu" },
     });
     if (result.error) {
       toast({ title: "Error", description: String(result.error), variant: "destructive" });
@@ -100,11 +74,6 @@ const Auth = () => {
           <p className="text-sm text-muted-foreground">
             {isLogin ? "Sign in to manage your teams" : "Sign up to start scheduling"}
           </p>
-          {!isLogin && (
-            <p className="text-xs text-booking-hero font-medium">
-              Only @uw.edu email addresses are accepted
-            </p>
-          )}
         </div>
 
         <Button
