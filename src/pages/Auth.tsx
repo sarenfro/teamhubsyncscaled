@@ -16,12 +16,28 @@ const Auth = () => {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        if (session?.user) navigate("/dashboard");
+      async (_event, session) => {
+        if (session?.user) {
+          const userEmail = session.user.email || "";
+          if (!userEmail.toLowerCase().endsWith("@uw.edu")) {
+            await supabase.auth.signOut();
+            showUwError();
+            return;
+          }
+          navigate("/dashboard");
+        }
       }
     );
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) navigate("/dashboard");
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        const userEmail = session.user.email || "";
+        if (!userEmail.toLowerCase().endsWith("@uw.edu")) {
+          await supabase.auth.signOut();
+          showUwError();
+          return;
+        }
+        navigate("/dashboard");
+      }
     });
     return () => subscription.unsubscribe();
   }, [navigate]);
