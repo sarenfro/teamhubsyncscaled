@@ -214,6 +214,30 @@ const Dashboard = () => {
           </p>
         </div>
 
+        {/* Personal iCal URL */}
+        <div className="rounded-xl border border-border p-6 space-y-3">
+          <h2 className="font-semibold text-foreground flex items-center gap-2">
+            <CalendarClock className="h-4 w-4" /> My Calendar Feed (iCal)
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Paste your personal iCal URL once. It'll auto-fill whenever someone adds your email to a team — no need to re-enter it per team.
+          </p>
+          <div className="flex gap-2">
+            <Input
+              value={personalIcal}
+              onChange={(e) => setPersonalIcal(e.target.value)}
+              placeholder="https://calendar.google.com/.../basic.ics"
+            />
+            <Button
+              variant="booking"
+              onClick={handleSaveIcal}
+              disabled={savingIcal || personalIcal.trim() === savedIcal}
+            >
+              {savingIcal ? "Saving..." : "Save"}
+            </Button>
+          </div>
+        </div>
+
         {/* Routing Forms */}
         <div className="rounded-xl border border-border p-6 space-y-3">
           <div className="flex items-center justify-between">
