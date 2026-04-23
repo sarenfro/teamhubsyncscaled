@@ -48,7 +48,7 @@ const Dashboard = () => {
       // Check if profile has slug set (onboarding complete)
       const { data: profile } = await supabase
         .from("profiles")
-        .select("slug")
+        .select("slug, ical_url")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -56,6 +56,8 @@ const Dashboard = () => {
         navigate("/onboarding");
         return;
       }
+      setPersonalIcal(profile.ical_url ?? "");
+      setSavedIcal(profile.ical_url ?? "");
 
       const { data } = await supabase
         .from("team_admins")
