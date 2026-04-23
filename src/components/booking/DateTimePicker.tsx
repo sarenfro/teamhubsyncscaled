@@ -505,8 +505,5 @@ const DayTimeline = ({
     </div>
   );
 };
-    </div>
-  );
-};
 
 export default DateTimePicker;
