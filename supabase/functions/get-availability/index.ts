@@ -575,9 +575,12 @@ serve(async (req) => {
               const calendarId = gcalToken.calendar_id || "primary";
               const busySlots = freeBusyData.calendars?.[calendarId]?.busy || [];
               for (const slot of busySlots) {
-                busyPeriods.push({
-                  start: new Date(slot.start),
-                  end: new Date(slot.end),
+                const s = new Date(slot.start);
+                const e = new Date(slot.end);
+                busyPeriods.push({ start: s, end: e });
+                memberBusyMap[member.id].push({
+                  start: s.toISOString(),
+                  end: e.toISOString(),
                 });
               }
               console.log(`Google Calendar: ${busySlots.length} busy slots for ${member.name}`);
