@@ -103,6 +103,22 @@ const Dashboard = () => {
     }
   };
 
+  const handleSaveIcal = async () => {
+    setSavingIcal(true);
+    const trimmed = personalIcal.trim();
+    const { error } = await supabase
+      .from("profiles")
+      .update({ ical_url: trimmed || null })
+      .eq("user_id", user!.id);
+    setSavingIcal(false);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      setSavedIcal(trimmed);
+      toast({ title: "iCal URL saved", description: "Will auto-fill on teams you join." });
+    }
+  };
+
   const handleClaim = async () => {
     if (!claimSlug.trim() || !claimPassword.trim()) return;
     setClaiming(true);
