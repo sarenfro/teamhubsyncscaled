@@ -32,6 +32,9 @@ const Dashboard = () => {
   const [loadingTeams, setLoadingTeams] = useState(true);
   const [pendingDeleteTeam, setPendingDeleteTeam] = useState<{ id: string; name: string } | null>(null);
   const [deleteStep, setDeleteStep] = useState<1 | 2>(1);
+  const [personalIcal, setPersonalIcal] = useState("");
+  const [savedIcal, setSavedIcal] = useState("");
+  const [savingIcal, setSavingIcal] = useState(false);
 
   // Claim team state
   const [showClaim, setShowClaim] = useState(false);
