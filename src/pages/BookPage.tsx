@@ -12,9 +12,13 @@ type Step = "select-member" | "select-datetime" | "enter-details" | "confirmed";
 
 const BookPage = () => {
   const { slug } = useParams<{ slug: string }>();
+  const { user } = useAuth();
   const [step, setStep] = useState<Step>("select-member");
   const [teamId, setTeamId] = useState<string | null>(null);
   const [teamName, setTeamName] = useState("");
+  const [ownerName, setOwnerName] = useState<string | null>(null);
+  const [ownerUserId, setOwnerUserId] = useState<string | null>(null);
+  const [isViewerAdmin, setIsViewerAdmin] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [loading, setLoading] = useState(true);
   const [members, setMembers] = useState<TeamMember[]>([]);
