@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
-import { useParams, Navigate } from "react-router-dom";
+import { useParams, Navigate, Link } from "react-router-dom";
+import { Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import TeamMemberSelect, { type TeamMember } from "@/components/booking/TeamMemberSelect";
 import DateTimePicker from "@/components/booking/DateTimePicker";
 import BookingForm from "@/components/booking/BookingForm";
@@ -10,9 +12,13 @@ type Step = "select-member" | "select-datetime" | "enter-details" | "confirmed";
 
 const BookPage = () => {
   const { slug } = useParams<{ slug: string }>();
+  const { user } = useAuth();
   const [step, setStep] = useState<Step>("select-member");
   const [teamId, setTeamId] = useState<string | null>(null);
   const [teamName, setTeamName] = useState("");
+  const [ownerName, setOwnerName] = useState<string | null>(null);
+  const [ownerUserId, setOwnerUserId] = useState<string | null>(null);
+  const [isViewerAdmin, setIsViewerAdmin] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [loading, setLoading] = useState(true);
   const [members, setMembers] = useState<TeamMember[]>([]);
@@ -57,10 +63,44 @@ const BookPage = () => {
           })),
         );
       }
+
+      // Find team owner and resolve their display name via profiles
+      const { data: owner } = await supabase
+        .from("team_admins")
+        .select("user_id")
+        .eq("team_id", team.id)
+        .eq("role", "owner")
+        .maybeSingle();
+
+      if (owner?.user_id) {
+        setOwnerUserId(owner.user_id);
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("display_name")
+          .eq("user_id", owner.user_id)
+          .maybeSingle();
+        setOwnerName(prof?.display_name?.trim() || "Team admin");
+      }
+
       setLoading(false);
     };
     load();
   }, [slug]);
+
+  // Check whether the current logged-in user is an admin of this team
+  useEffect(() => {
+    if (!user || !teamId) {
+      setIsViewerAdmin(false);
+      return;
+    }
+    supabase
+      .from("team_admins")
+      .select("id")
+      .eq("team_id", teamId)
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => setIsViewerAdmin(!!data));
+  }, [user, teamId]);
 
   if (notFound) return <Navigate to="/" replace />;
 
@@ -136,6 +176,22 @@ const BookPage = () => {
         <div className="mb-6 text-center">
           <h1 className="text-2xl font-bold text-foreground">{teamName}</h1>
           <p className="text-sm text-muted-foreground">Schedule a meeting with the team</p>
+          {ownerName && (
+            <div className="mt-3 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+              <span>
+                Team admin: <span className="font-medium text-foreground">{ownerName}</span>
+              </span>
+              {isViewerAdmin && (
+                <Link
+                  to={`/admin/${slug}`}
+                  className="inline-flex items-center gap-1 rounded-full border border-booking-hero bg-booking-hero-light px-3 py-1 text-xs font-medium text-booking-hero transition-colors hover:bg-booking-hero hover:text-primary-foreground"
+                >
+                  <Shield className="h-3 w-3" />
+                  Admin dashboard
+                </Link>
+              )}
+            </div>
+          )}
         </div>
 
         {step === "select-member" && (
