@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
-import { useParams, Navigate } from "react-router-dom";
+import { useParams, Navigate, Link } from "react-router-dom";
+import { Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import TeamMemberSelect, { type TeamMember } from "@/components/booking/TeamMemberSelect";
 import DateTimePicker from "@/components/booking/DateTimePicker";
 import BookingForm from "@/components/booking/BookingForm";
