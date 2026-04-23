@@ -181,7 +181,7 @@ const BookPage = () => {
               <span>
                 Team admin: <span className="font-medium text-foreground">{ownerName}</span>
               </span>
-              {isViewerAdmin && ownerUserId === user?.id && (
+              {isViewerAdmin && (
                 <Link
                   to={`/admin/${slug}`}
                   className="inline-flex items-center gap-1 rounded-full border border-booking-hero bg-booking-hero-light px-3 py-1 text-xs font-medium text-booking-hero transition-colors hover:bg-booking-hero hover:text-primary-foreground"
