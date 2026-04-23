@@ -605,9 +605,16 @@ serve(async (req) => {
       })
       .map((slot) => slot.label);
 
-    return new Response(JSON.stringify({ available_times: availableTimes }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    const memberBusy = members.map((m) => ({
+      id: m.id,
+      name: m.name,
+      busy: memberBusyMap[m.id] ?? [],
+    }));
+
+    return new Response(
+      JSON.stringify({ available_times: availableTimes, member_busy: memberBusy }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   } catch (err) {
     console.error("get-availability error:", err);
     return new Response(JSON.stringify({ error: String(err) }), {
