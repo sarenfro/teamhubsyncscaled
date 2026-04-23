@@ -511,6 +511,12 @@ serve(async (req) => {
                 console.warn(`No busy events for ${member.name} on ${dateStr} (feed has ${eventCount} events total)`);
               }
               busyPeriods.push(...events.map((e) => ({ start: e.start, end: e.end })));
+              for (const e of events) {
+                memberBusyMap[member.id].push({
+                  start: e.start.toISOString(),
+                  end: e.end.toISOString(),
+                });
+              }
             }
           } catch (e) {
             console.error(`iCal fetch failed for member ${member.name}:`, e);
