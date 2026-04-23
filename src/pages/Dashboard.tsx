@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Users, LogOut, Key, Calendar, Clock, Link2, GitFork, Trash2, DoorOpen } from "lucide-react";
+import { Plus, Users, LogOut, Key, Calendar, Clock, Link2, GitFork, Trash2, DoorOpen, CalendarClock } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
