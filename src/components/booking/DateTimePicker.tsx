@@ -35,12 +35,20 @@ function formatMemberNames(members: TeamMember[]): string {
   return firsts.slice(0, -1).join(", ") + " & " + firsts[firsts.length - 1];
 }
 
+interface MemberBusy {
+  id: string;
+  name: string;
+  busy: { start: string; end: string }[];
+}
+
 const DateTimePicker = ({ members, teamId, onSelect, onBack }: DateTimePickerProps) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
+  const [memberBusy, setMemberBusy] = useState<MemberBusy[]>([]);
   const [loadingTimes, setLoadingTimes] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "day">("list");
 
   const calendarDays = useMemo(() => {
     const start = startOfMonth(currentMonth);
@@ -62,6 +70,7 @@ const DateTimePicker = ({ members, teamId, onSelect, onBack }: DateTimePickerPro
     const fetchAvailability = async () => {
       setLoadingTimes(true);
       setAvailableTimes([]);
+      setMemberBusy([]);
 
       const dateStr = format(selectedDate, "yyyy-MM-dd");
       const memberIds = members.map((m) => m.id).join(",");
@@ -84,13 +93,16 @@ const DateTimePicker = ({ members, teamId, onSelect, onBack }: DateTimePickerPro
         if (res.ok) {
           const json = await res.json();
           setAvailableTimes(json.available_times ?? []);
+          setMemberBusy(json.member_busy ?? []);
         } else {
           console.error("Failed to fetch availability:", await res.text());
           setAvailableTimes([]);
+          setMemberBusy([]);
         }
       } catch (err) {
         console.error("Availability fetch error:", err);
         setAvailableTimes([]);
+        setMemberBusy([]);
       } finally {
         setLoadingTimes(false);
       }
