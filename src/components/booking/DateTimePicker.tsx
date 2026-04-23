@@ -35,12 +35,20 @@ function formatMemberNames(members: TeamMember[]): string {
   return firsts.slice(0, -1).join(", ") + " & " + firsts[firsts.length - 1];
 }
 
+interface MemberBusy {
+  id: string;
+  name: string;
+  busy: { start: string; end: string }[];
+}
+
 const DateTimePicker = ({ members, teamId, onSelect, onBack }: DateTimePickerProps) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
+  const [memberBusy, setMemberBusy] = useState<MemberBusy[]>([]);
   const [loadingTimes, setLoadingTimes] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "day">("list");
 
   const calendarDays = useMemo(() => {
     const start = startOfMonth(currentMonth);
@@ -62,6 +70,7 @@ const DateTimePicker = ({ members, teamId, onSelect, onBack }: DateTimePickerPro
     const fetchAvailability = async () => {
       setLoadingTimes(true);
       setAvailableTimes([]);
+      setMemberBusy([]);
 
       const dateStr = format(selectedDate, "yyyy-MM-dd");
       const memberIds = members.map((m) => m.id).join(",");
@@ -84,13 +93,16 @@ const DateTimePicker = ({ members, teamId, onSelect, onBack }: DateTimePickerPro
         if (res.ok) {
           const json = await res.json();
           setAvailableTimes(json.available_times ?? []);
+          setMemberBusy(json.member_busy ?? []);
         } else {
           console.error("Failed to fetch availability:", await res.text());
           setAvailableTimes([]);
+          setMemberBusy([]);
         }
       } catch (err) {
         console.error("Availability fetch error:", err);
         setAvailableTimes([]);
+        setMemberBusy([]);
       } finally {
         setLoadingTimes(false);
       }
@@ -234,31 +246,262 @@ const DateTimePicker = ({ members, teamId, onSelect, onBack }: DateTimePickerPro
         </div>
       </div>
 
-      {/* Right panel - Time slots */}
+      {/* Right panel - Time slots / Day view */}
       {selectedDate && (
-        <div className="w-full lg:w-48 p-6 space-y-3 max-h-[400px] overflow-y-auto">
-          <h4 className="text-sm font-semibold text-foreground">{format(selectedDate, "EEE, MMM d")}</h4>
+        <div
+          className={`w-full p-6 space-y-3 ${
+            viewMode === "day" ? "lg:w-[420px]" : "lg:w-48"
+          } max-h-[480px] overflow-y-auto`}
+        >
+          <div className="flex items-center justify-between gap-2">
+            <h4 className="text-sm font-semibold text-foreground">
+              {format(selectedDate, "EEE, MMM d")}
+            </h4>
+            <div className="inline-flex rounded-md border border-border overflow-hidden text-xs">
+              <button
+                onClick={() => setViewMode("list")}
+                className={`px-2 py-1 transition-colors ${
+                  viewMode === "list"
+                    ? "bg-booking-selected text-booking-selected-foreground"
+                    : "text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                List
+              </button>
+              <button
+                onClick={() => setViewMode("day")}
+                className={`px-2 py-1 transition-colors ${
+                  viewMode === "day"
+                    ? "bg-booking-selected text-booking-selected-foreground"
+                    : "text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                Day
+              </button>
+            </div>
+          </div>
+
           {loadingTimes ? (
             <p className="text-sm text-muted-foreground">Loading...</p>
-          ) : availableTimes.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No available times.</p>
+          ) : viewMode === "list" ? (
+            availableTimes.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No available times.</p>
+            ) : (
+              <div className="space-y-2">
+                {availableTimes.map((time) => (
+                  <Button
+                    key={time}
+                    variant={selectedTime === time ? "booking-time-selected" : "booking-time"}
+                    size="sm"
+                    onClick={() => handleTimeSelect(time)}
+                    className="text-sm"
+                  >
+                    {time}
+                  </Button>
+                ))}
+              </div>
+            )
           ) : (
-            <div className="space-y-2">
-              {availableTimes.map((time) => (
-                <Button
-                  key={time}
-                  variant={selectedTime === time ? "booking-time-selected" : "booking-time"}
-                  size="sm"
-                  onClick={() => handleTimeSelect(time)}
-                  className="text-sm"
-                >
-                  {time}
-                </Button>
-              ))}
-            </div>
+            <DayTimeline
+              date={selectedDate}
+              members={members}
+              memberBusy={memberBusy}
+              availableTimes={availableTimes}
+              selectedTime={selectedTime}
+              onSelectTime={handleTimeSelect}
+            />
           )}
         </div>
       )}
+    </div>
+  );
+};
+
+// Daily timeline: 8am–6pm, one column per team member, busy blocks shaded.
+// Clicking an empty 30-min slot books that time (when it's also in availableTimes).
+interface DayTimelineProps {
+  date: Date;
+  members: TeamMember[];
+  memberBusy: MemberBusy[];
+  availableTimes: string[];
+  selectedTime: string | null;
+  onSelectTime: (time: string) => void;
+}
+
+const DAY_START_HOUR = 8;
+const DAY_END_HOUR = 18; // exclusive
+const TOTAL_MINUTES = (DAY_END_HOUR - DAY_START_HOUR) * 60;
+const PIXELS_PER_MINUTE = 1.2; // 720px total height
+const TIMELINE_HEIGHT = TOTAL_MINUTES * PIXELS_PER_MINUTE;
+
+function formatHourLabel(h: number): string {
+  const period = h >= 12 ? "pm" : "am";
+  const display = h % 12 === 0 ? 12 : h % 12;
+  return `${display}${period}`;
+}
+
+function timeLabelFromHourMinute(h: number, m: number): string {
+  const period = h >= 12 ? "pm" : "am";
+  const display = h % 12 === 0 ? 12 : h % 12;
+  return `${display}:${m.toString().padStart(2, "0")} ${period}`;
+}
+
+const DayTimeline = ({
+  date,
+  members,
+  memberBusy,
+  availableTimes,
+  selectedTime,
+  onSelectTime,
+}: DayTimelineProps) => {
+  // Compute busy block positions for each member, in minutes-from-DAY_START in Seattle TZ
+  const memberBusyById = new Map(memberBusy.map((mb) => [mb.id, mb.busy]));
+
+  const dateStr = format(date, "yyyy-MM-dd");
+
+  const minutesFromStartInSeattle = (iso: string): number => {
+    const d = new Date(iso);
+    // Get seattle hour/minute
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Los_Angeles",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).formatToParts(d);
+    const p: Record<string, number> = {};
+    parts.forEach(({ type, value }) => {
+      if (type !== "literal") p[type] = parseInt(value);
+    });
+    const sameDay = `${p.year}-${p.month.toString().padStart(2, "0")}-${p.day
+      .toString()
+      .padStart(2, "0")}` === dateStr;
+    const hour = p.hour % 24;
+    const minute = p.minute;
+    if (!sameDay) {
+      // Block runs across midnight; clamp to day boundaries
+      return d < new Date(`${dateStr}T00:00:00`) ? -Infinity : Infinity;
+    }
+    return (hour - DAY_START_HOUR) * 60 + minute;
+  };
+
+  // Build 30-min slot rows
+  const slots: { hour: number; minute: number; label: string }[] = [];
+  for (let h = DAY_START_HOUR; h < DAY_END_HOUR; h++) {
+    for (const m of [0, 30]) {
+      slots.push({ hour: h, minute: m, label: timeLabelFromHourMinute(h, m) });
+    }
+  }
+
+  const availableSet = new Set(availableTimes);
+
+  return (
+    <div className="border border-border rounded-md overflow-hidden">
+      {/* Header */}
+      <div
+        className="grid border-b border-border bg-muted/40 text-xs font-medium text-muted-foreground"
+        style={{ gridTemplateColumns: `48px repeat(${members.length}, minmax(0,1fr))` }}
+      >
+        <div className="px-1 py-2"></div>
+        {members.map((m) => (
+          <div key={m.id} className="px-1 py-2 text-center truncate" title={m.name}>
+            {m.name.split(" ")[0]}
+          </div>
+        ))}
+      </div>
+
+      {/* Timeline body */}
+      <div
+        className="relative grid"
+        style={{
+          gridTemplateColumns: `48px repeat(${members.length}, minmax(0,1fr))`,
+          height: `${TIMELINE_HEIGHT}px`,
+        }}
+      >
+        {/* Hour labels + grid lines */}
+        <div className="relative border-r border-border">
+          {Array.from({ length: DAY_END_HOUR - DAY_START_HOUR + 1 }, (_, i) => {
+            const h = DAY_START_HOUR + i;
+            return (
+              <div
+                key={h}
+                className="absolute left-0 right-0 text-[10px] text-muted-foreground px-1 -translate-y-1/2"
+                style={{ top: `${i * 60 * PIXELS_PER_MINUTE}px` }}
+              >
+                {formatHourLabel(h)}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Member columns */}
+        {members.map((m) => {
+          const busy = memberBusyById.get(m.id) ?? [];
+          return (
+            <div key={m.id} className="relative border-r border-border last:border-r-0">
+              {/* Hour grid lines */}
+              {Array.from({ length: DAY_END_HOUR - DAY_START_HOUR }, (_, i) => (
+                <div
+                  key={i}
+                  className="absolute left-0 right-0 border-t border-border/50"
+                  style={{ top: `${(i + 1) * 60 * PIXELS_PER_MINUTE}px` }}
+                />
+              ))}
+
+              {/* Clickable 30-min slot rows */}
+              {slots.map((slot) => {
+                const top =
+                  ((slot.hour - DAY_START_HOUR) * 60 + slot.minute) * PIXELS_PER_MINUTE;
+                const isAvailable = availableSet.has(slot.label);
+                const isSelected = selectedTime === slot.label;
+                return (
+                  <button
+                    key={`${m.id}-${slot.hour}-${slot.minute}`}
+                    onClick={() => isAvailable && onSelectTime(slot.label)}
+                    disabled={!isAvailable}
+                    className={`absolute left-0 right-0 z-0 transition-colors ${
+                      isSelected
+                        ? "bg-booking-selected/30"
+                        : isAvailable
+                          ? "hover:bg-booking-hover/60 cursor-pointer"
+                          : "cursor-not-allowed"
+                    }`}
+                    style={{ top: `${top}px`, height: `${30 * PIXELS_PER_MINUTE}px` }}
+                    title={isAvailable ? `Book ${slot.label}` : "Unavailable"}
+                  />
+                );
+              })}
+
+              {/* Busy blocks (rendered above slot buttons) */}
+              {busy.map((b, idx) => {
+                const startMin = minutesFromStartInSeattle(b.start);
+                const endMin = minutesFromStartInSeattle(b.end);
+                const clampedStart = Math.max(0, startMin);
+                const clampedEnd = Math.min(TOTAL_MINUTES, endMin);
+                if (clampedEnd <= 0 || clampedStart >= TOTAL_MINUTES) return null;
+                const height = Math.max(4, (clampedEnd - clampedStart) * PIXELS_PER_MINUTE);
+                return (
+                  <div
+                    key={idx}
+                    className="absolute left-1 right-1 z-10 rounded-sm bg-destructive/70 border border-destructive pointer-events-none"
+                    style={{
+                      top: `${clampedStart * PIXELS_PER_MINUTE}px`,
+                      height: `${height}px`,
+                    }}
+                    title="Busy"
+                  />
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+
+      <p className="text-[11px] text-muted-foreground p-2 border-t border-border bg-muted/30">
+        Red blocks = busy. Click an empty slot to book.
+      </p>
     </div>
   );
 };

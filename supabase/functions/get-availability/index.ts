@@ -474,6 +474,9 @@ serve(async (req) => {
 
     // Collect busy periods from all members' iCal feeds AND Google Calendar
     const busyPeriods: { start: Date; end: Date }[] = [];
+    // Per-member busy periods for daily timeline view
+    const memberBusyMap: Record<string, { start: string; end: string }[]> = {};
+    for (const m of members) memberBusyMap[m.id] = [];
 
     // Also fetch Google Calendar tokens for these members
     const { data: gcalTokens } = await supabase
@@ -508,6 +511,12 @@ serve(async (req) => {
                 console.warn(`No busy events for ${member.name} on ${dateStr} (feed has ${eventCount} events total)`);
               }
               busyPeriods.push(...events.map((e) => ({ start: e.start, end: e.end })));
+              for (const e of events) {
+                memberBusyMap[member.id].push({
+                  start: e.start.toISOString(),
+                  end: e.end.toISOString(),
+                });
+              }
             }
           } catch (e) {
             console.error(`iCal fetch failed for member ${member.name}:`, e);
@@ -566,9 +575,12 @@ serve(async (req) => {
               const calendarId = gcalToken.calendar_id || "primary";
               const busySlots = freeBusyData.calendars?.[calendarId]?.busy || [];
               for (const slot of busySlots) {
-                busyPeriods.push({
-                  start: new Date(slot.start),
-                  end: new Date(slot.end),
+                const s = new Date(slot.start);
+                const e = new Date(slot.end);
+                busyPeriods.push({ start: s, end: e });
+                memberBusyMap[member.id].push({
+                  start: s.toISOString(),
+                  end: e.toISOString(),
                 });
               }
               console.log(`Google Calendar: ${busySlots.length} busy slots for ${member.name}`);
@@ -593,9 +605,16 @@ serve(async (req) => {
       })
       .map((slot) => slot.label);
 
-    return new Response(JSON.stringify({ available_times: availableTimes }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    const memberBusy = members.map((m) => ({
+      id: m.id,
+      name: m.name,
+      busy: memberBusyMap[m.id] ?? [],
+    }));
+
+    return new Response(
+      JSON.stringify({ available_times: availableTimes, member_busy: memberBusy }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   } catch (err) {
     console.error("get-availability error:", err);
     return new Response(JSON.stringify({ error: String(err) }), {
