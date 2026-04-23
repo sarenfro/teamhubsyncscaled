@@ -63,10 +63,44 @@ const BookPage = () => {
           })),
         );
       }
+
+      // Find team owner and resolve their display name via profiles
+      const { data: owner } = await supabase
+        .from("team_admins")
+        .select("user_id")
+        .eq("team_id", team.id)
+        .eq("role", "owner")
+        .maybeSingle();
+
+      if (owner?.user_id) {
+        setOwnerUserId(owner.user_id);
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("display_name")
+          .eq("user_id", owner.user_id)
+          .maybeSingle();
+        setOwnerName(prof?.display_name?.trim() || "Team admin");
+      }
+
       setLoading(false);
     };
     load();
   }, [slug]);
+
+  // Check whether the current logged-in user is an admin of this team
+  useEffect(() => {
+    if (!user || !teamId) {
+      setIsViewerAdmin(false);
+      return;
+    }
+    supabase
+      .from("team_admins")
+      .select("id")
+      .eq("team_id", teamId)
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => setIsViewerAdmin(!!data));
+  }, [user, teamId]);
 
   if (notFound) return <Navigate to="/" replace />;
 
