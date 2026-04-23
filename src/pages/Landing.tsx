@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Users, Calendar, Lock } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 const Landing = () => {
+  const { user } = useAuth("");
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
       <div className="max-w-2xl w-full text-center space-y-10">
@@ -38,9 +40,16 @@ const Landing = () => {
           </div>
         </div>
 
-        <Button asChild variant="booking" size="lg">
-          <Link to="/create">Create Your Team Page</Link>
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Button asChild variant="booking" size="lg">
+            <Link to="/create">Create Your Team Page</Link>
+          </Button>
+          {user && (
+            <Button asChild variant="outline" size="lg">
+              <Link to="/dashboard">Skip — Go to My Dashboard</Link>
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
