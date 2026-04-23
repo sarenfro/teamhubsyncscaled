@@ -474,6 +474,9 @@ serve(async (req) => {
 
     // Collect busy periods from all members' iCal feeds AND Google Calendar
     const busyPeriods: { start: Date; end: Date }[] = [];
+    // Per-member busy periods for daily timeline view
+    const memberBusyMap: Record<string, { start: string; end: string }[]> = {};
+    for (const m of members) memberBusyMap[m.id] = [];
 
     // Also fetch Google Calendar tokens for these members
     const { data: gcalTokens } = await supabase
