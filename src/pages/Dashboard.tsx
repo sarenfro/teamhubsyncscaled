@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Users, LogOut, Key, Calendar, Clock, Link2, GitFork, Trash2, DoorOpen } from "lucide-react";
+import { Plus, Users, LogOut, Key, Calendar, Clock, Link2, GitFork, Trash2, DoorOpen, CalendarClock } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,6 +32,9 @@ const Dashboard = () => {
   const [loadingTeams, setLoadingTeams] = useState(true);
   const [pendingDeleteTeam, setPendingDeleteTeam] = useState<{ id: string; name: string } | null>(null);
   const [deleteStep, setDeleteStep] = useState<1 | 2>(1);
+  const [personalIcal, setPersonalIcal] = useState("");
+  const [savedIcal, setSavedIcal] = useState("");
+  const [savingIcal, setSavingIcal] = useState(false);
 
   // Claim team state
   const [showClaim, setShowClaim] = useState(false);
@@ -45,7 +48,7 @@ const Dashboard = () => {
       // Check if profile has slug set (onboarding complete)
       const { data: profile } = await supabase
         .from("profiles")
-        .select("slug")
+        .select("slug, ical_url")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -53,6 +56,8 @@ const Dashboard = () => {
         navigate("/onboarding");
         return;
       }
+      setPersonalIcal(profile.ical_url ?? "");
+      setSavedIcal(profile.ical_url ?? "");
 
       const { data } = await supabase
         .from("team_admins")
@@ -95,6 +100,22 @@ const Dashboard = () => {
     } else {
       toast({ title: "Left team" });
       await reloadTeams();
+    }
+  };
+
+  const handleSaveIcal = async () => {
+    setSavingIcal(true);
+    const trimmed = personalIcal.trim();
+    const { error } = await supabase
+      .from("profiles")
+      .update({ ical_url: trimmed || null })
+      .eq("user_id", user!.id);
+    setSavingIcal(false);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      setSavedIcal(trimmed);
+      toast({ title: "iCal URL saved", description: "Will auto-fill on teams you join." });
     }
   };
 
@@ -191,6 +212,30 @@ const Dashboard = () => {
           <p className="text-sm text-muted-foreground">
             Connect Google Calendar and other services.
           </p>
+        </div>
+
+        {/* Personal iCal URL */}
+        <div className="rounded-xl border border-border p-6 space-y-3">
+          <h2 className="font-semibold text-foreground flex items-center gap-2">
+            <CalendarClock className="h-4 w-4" /> My Calendar Feed (iCal)
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Paste your personal iCal URL once. It'll auto-fill whenever someone adds your email to a team — no need to re-enter it per team.
+          </p>
+          <div className="flex gap-2">
+            <Input
+              value={personalIcal}
+              onChange={(e) => setPersonalIcal(e.target.value)}
+              placeholder="https://calendar.google.com/.../basic.ics"
+            />
+            <Button
+              variant="booking"
+              onClick={handleSaveIcal}
+              disabled={savingIcal || personalIcal.trim() === savedIcal}
+            >
+              {savingIcal ? "Saving..." : "Save"}
+            </Button>
+          </div>
         </div>
 
         {/* Routing Forms */}
