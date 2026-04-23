@@ -176,6 +176,22 @@ const BookPage = () => {
         <div className="mb-6 text-center">
           <h1 className="text-2xl font-bold text-foreground">{teamName}</h1>
           <p className="text-sm text-muted-foreground">Schedule a meeting with the team</p>
+          {ownerName && (
+            <div className="mt-3 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+              <span>
+                Team admin: <span className="font-medium text-foreground">{ownerName}</span>
+              </span>
+              {isViewerAdmin && ownerUserId === user?.id && (
+                <Link
+                  to={`/admin/${slug}`}
+                  className="inline-flex items-center gap-1 rounded-full border border-booking-hero bg-booking-hero-light px-3 py-1 text-xs font-medium text-booking-hero transition-colors hover:bg-booking-hero hover:text-primary-foreground"
+                >
+                  <Shield className="h-3 w-3" />
+                  Admin dashboard
+                </Link>
+              )}
+            </div>
+          )}
         </div>
 
         {step === "select-member" && (
